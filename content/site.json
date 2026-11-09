@@ -7,9 +7,24 @@
     ]
   },
   "articles": [],
-  "notes": [],
+  "notes": [
+    {
+      "id": "mw90u5uqrqzy",
+      "date": "2026-11-09",
+      "text": "这是我创建博客的第一天！庆祝一下",
+      "tags": [
+        "开始"
+      ]
+    }
+  ],
   "photos": [],
   "timeline": [
+    {
+      "id": "mw90u5ureg7n",
+      "date": "2026-11-09 16:50",
+      "text": "记了一笔手记：这是我创建博客的第一天！庆祝一下",
+      "kind": "note"
+    },
     {
       "id": "mw90tpmfzujf",
       "date": "2026-11-09 16:50",
