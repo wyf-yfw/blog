@@ -240,19 +240,71 @@
     let running = true;
 
     const hot = 'a, button, [role="button"], .sicon, figure[data-src], .nav__toggle, .q__toggle';
+    let mx = tx;
+    let my = ty;
+    let lining = false;
+    let lineLink = null;
+
+    function navUsesLine() {
+      return navLine && getComputedStyle(navLine).display !== 'none';
+    }
+
+    /* 指针落在导航字上，或字与字之间的空隙里：取最近的一项 */
+    function linkAt(px, py) {
+      if (!navLinks || !links.length || !navUsesLine()) return null;
+      const box = navLinks.getBoundingClientRect();
+      if (py < box.top - 6 || py > box.bottom + 8 || px < box.left || px > box.right) return null;
+      let best = null;
+      let bestDist = Infinity;
+      links.forEach((a) => {
+        const r = a.getBoundingClientRect();
+        if (px < r.left - 15 || px > r.right + 15) return;
+        const dist = Math.abs(px - (r.left + r.width / 2));
+        if (dist < bestDist) { best = a; bestDist = dist; }
+      });
+      return best;
+    }
+
+    function placeOnLink(link) {
+      const r = link.getBoundingClientRect();
+      lineLink = link;
+      lining = true;
+      el.classList.add('is-line');
+      el.classList.remove('is-hot');
+      el.style.setProperty('--line-w', r.width + 'px');
+      tx = r.left + r.width / 2;
+      ty = r.bottom - 0.5;
+    }
+
+    function releaseLine() {
+      if (!lining) return;
+      lining = false;
+      lineLink = null;
+      el.classList.remove('is-line');
+      tx = mx;
+      ty = my;
+    }
 
     function frame() {
       if (!running) return;
-      x += (tx - x) * 0.18;
-      y += (ty - y) * 0.18;
+      const k = lining ? 0.16 : 0.18;
+      x += (tx - x) * k;
+      y += (ty - y) * k;
       el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
       requestAnimationFrame(frame);
     }
 
     document.addEventListener('pointermove', (e) => {
       if (e.pointerType !== 'mouse') return;
-      tx = e.clientX;
-      ty = e.clientY;
+      mx = e.clientX;
+      my = e.clientY;
+      const link = linkAt(mx, my);
+      if (link) placeOnLink(link);
+      else {
+        releaseLine();
+        tx = mx;
+        ty = my;
+      }
       if (!visible) {
         x = tx;
         y = ty;
@@ -262,14 +314,23 @@
     }, { passive: true });
 
     document.addEventListener('pointerover', (e) => {
-      el.classList.toggle('is-hot', !!e.target.closest(hot));
+      const link = navUsesLine() ? e.target.closest('.nav__link') : null;
+      if (link) placeOnLink(link);
+      else if (!e.target.closest('.nav__links')) {
+        releaseLine();
+        el.classList.toggle('is-hot', !!e.target.closest(hot));
+      }
       el.style.opacity = e.target.closest('.adm') ? '0' : '';
     });
+
+    window.addEventListener('scroll', () => { if (lineLink) placeOnLink(lineLink); }, { passive: true });
+    window.addEventListener('resize', () => { if (lineLink) placeOnLink(lineLink); });
 
     document.addEventListener('pointerdown', () => el.classList.add('is-down'));
     document.addEventListener('pointerup', () => el.classList.remove('is-down'));
 
     document.addEventListener('pointerleave', () => {
+      releaseLine();
       visible = false;
       el.classList.remove('is-on');
     });
@@ -319,12 +380,16 @@
       placeLine(links[current], false);
     }
 
-    // 悬停时黑线临时滑过去，移开再回当前页
-    navLinks.addEventListener('mouseover', (e) => {
-      const link = e.target.closest('.nav__link');
-      if (link) placeLine(link, true);
-    });
-    navLinks.addEventListener('mouseleave', () => placeLine(links[current], true));
+    // 有自定义光标时，悬停下划线由墨点变成，这条线留在当前页
+    const cursorOwnsHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+      && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!cursorOwnsHover) {
+      navLinks.addEventListener('mouseover', (e) => {
+        const link = e.target.closest('.nav__link');
+        if (link) placeLine(link, true);
+      });
+      navLinks.addEventListener('mouseleave', () => placeLine(links[current], true));
+    }
 
     // 字体加载完成后宽度会变，重新量一次
     if (document.fonts && document.fonts.ready) {

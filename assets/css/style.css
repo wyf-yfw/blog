@@ -55,6 +55,7 @@ html {
   font-size: 16px;
   /* 常驻滚动条槽位：短页面和长页面版心一致，切页时导航不会左右跳 */
   scrollbar-gutter: stable;
+  overflow-x: clip;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-size-adjust: 100%;
@@ -131,10 +132,11 @@ body.is-leaving .foot {
 }
 
 /* ---------- 2.6 鼠标光标 ---------- */
-/* 只有 JS 确认是精确指针设备（鼠标）时才接管，触屏和脚本失效都不受影响 */
-.has-cursor main,
-.has-cursor .nav,
-.has-cursor .foot { cursor: none; }
+/* 只有 JS 确认是精确指针设备（鼠标）时才接管，触屏和脚本失效都不受影响。
+   链接的浏览器默认样式、按钮和照片上的 cursor:pointer 会盖过父级继承来的 none，
+   所以要压到每一个元素上，悬停可点区域时才不会露出系统手型。 */
+.has-cursor,
+.has-cursor * { cursor: none !important; }
 
 .cursor {
   position: fixed;
@@ -163,7 +165,7 @@ body.is-leaving .foot {
   width: 4px;
   height: 4px;
   background: var(--ink);
-  transition: opacity .2s var(--ease), width .2s var(--ease), height .2s var(--ease);
+  transition: opacity .2s var(--ease), width .34s var(--ease), height .28s var(--ease), border-radius .28s var(--ease);
 }
 
 /* 平时只有一个小点；指到可点元素上才绽开圆环 */
@@ -182,6 +184,15 @@ body.is-leaving .foot {
 }
 
 .cursor.is-hot .cursor__dot { opacity: 0; }
+
+/* 导航这种本来就有下划线的地方：墨点拉开成那条线，移开再收成点 */
+.cursor.is-line .cursor__ring { opacity: 0; transform: translate(-50%, -50%) scale(.45); }
+.cursor.is-line .cursor__dot {
+  width: var(--line-w, 4px);
+  height: 1px;
+  border-radius: 0;
+  opacity: 1;
+}
 
 /* 按下 */
 .cursor.is-down .cursor__ring { transform: translate(-50%, -50%) scale(.8); }
@@ -266,7 +277,13 @@ body.is-leaving .foot {
 
 .nav__line.is-ready {
   opacity: 1;
-  transition: transform .42s var(--ease), width .42s var(--ease);
+  transition: transform .42s var(--ease), width .42s var(--ease), opacity .24s var(--ease);
+}
+
+/* 自定义光标接管时，悬停下划线由墨点变成；原来的黑线先让开，避免叠成两条 */
+@media (min-width: 761px) {
+  .has-cursor .nav__link::after { display: none; }
+  .has-cursor:has(.cursor.is-line) .nav__line { opacity: 0; }
 }
 
 .nav__toggle {
@@ -283,6 +300,7 @@ body.is-leaving .foot {
 /* ---------- 5. Hero：首屏一句话 ---------- */
 .hero {
   /* 占满一屏（扣掉导航），正文全部要往下滑才看得到 */
+  position: relative;
   min-height: calc(100vh - var(--nav-h));
   min-height: calc(100svh - var(--nav-h));
   display: flex;
@@ -292,7 +310,18 @@ body.is-leaving .foot {
   padding-bottom: clamp(88px, 15vh, 176px);
 }
 
+/* 首屏水墨：平时全透明，点击才晕开。跟着首屏走，不挡点击 */
+.ink {
+  position: fixed;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+  display: block;
+}
+
 .q {
+  position: relative;
+  z-index: 1;
   margin: 0;
   /* 只用 backwards：动画结束后把 transform 交还给内联样式，视差才能生效 */
   animation: rise-in .8s var(--ease) backwards;
@@ -1200,8 +1229,9 @@ body.is-leaving .foot {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .has-cursor main, .has-cursor .nav, .has-cursor .foot { cursor: auto; }
+  .has-cursor, .has-cursor * { cursor: auto !important; }
   .cursor { display: none; }
+  .ink { display: none; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-delay: 0ms !important;
