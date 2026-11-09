@@ -6,7 +6,21 @@
       "在这里随心所欲记录一点东西，没有熟人知道，嘻嘻嘻嘻。"
     ]
   },
-  "articles": [],
+  "articles": [
+    {
+      "id": "mw93ae8g62u2",
+      "date": "2026-11-09",
+      "title": "123",
+      "excerpt": "111",
+      "category": "学记",
+      "tags": [
+        "123",
+        "456"
+      ],
+      "minutes": null,
+      "body": "123"
+    }
+  ],
   "notes": [
     {
       "id": "mw90u5uqrqzy",
@@ -28,6 +42,12 @@
   ],
   "photos": [],
   "timeline": [
+    {
+      "id": "mw93ae8gocbz",
+      "date": "2026-11-09 17:59",
+      "text": "发布了文章：123",
+      "kind": "article"
+    },
     {
       "id": "mw91z2cv2r23",
       "date": "2026-11-09 17:22",
