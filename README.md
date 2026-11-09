@@ -69,11 +69,20 @@ site/
 
 ## 部署
 
-纯静态，扔哪儿都行：
+线上地址：**https://kriswang.me**
 
-- **GitHub Pages**：把 `site/` 里的内容推到仓库根目录，Settings → Pages 选分支即可。
-- **Vercel / Netlify**：新建项目，构建命令留空，输出目录填 `site`。
-- **自己的服务器**：把 `site/` 拷到任意静态目录。
+- 仓库：https://github.com/wyf-yfw/blog （`main` 分支根目录）
+- 托管：GitHub Pages，推上去自动构建，`.nojekyll` 跳过 Jekyll 处理
+- 域名：`kriswang.me`，仓库根目录的 `CNAME` 文件指定；`www` 和裸域名都指向它
+- HTTPS：Let's Encrypt 自动签发，强制跳转
+- DNS（阿里云）：`@` 四条 A 记录指向 `185.199.108-111.153`，`www` CNAME 到 `wyf-yfw.github.io`
+
+改完直接 `git push`，一两分钟后站点更新，不用手动构建。
+
+换成别的托管也行，纯静态扔哪儿都能跑：
+
+- **Cloudflare Pages / Vercel**：新建项目，构建命令留空，输出目录填 `.`，再把域名 DNS 迁过去。
+- **自己的服务器**：把 `site/` 里的内容拷到 nginx 的静态目录即可。
 
 ## 还没做的
 
