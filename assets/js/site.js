@@ -23,10 +23,19 @@
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
-  /* 极简标记：## 小标题、> 引用、- 列表、**粗体**、`代码` */
+  /* 极简标记：## 小标题、> 引用、- 列表、**粗体**、`代码`、![说明](图片地址) */
+  const safeSrc = (s) => /^(assets\/|https?:\/\/)/i.test(s || '');
+
   const inline = (t) => esc(t)
+    .replace(/!\[([^\]]*)\]\((assets\/[^)\s]+|https?:\/\/[^)\s]+)\)/gi,
+      '<img class="prose__inline-img" src="$2" alt="$1" loading="lazy">')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  function figureImg(alt, src) {
+    if (!safeSrc(src)) return '<p>' + inline(`![${alt}](${src})`) + '</p>';
+    return `<figure class="prose__img"><img src="${esc(src)}" alt="${esc(alt)}" loading="lazy"></figure>`;
+  }
 
   function renderBody(body) {
     const blocks = String(body || '').split(/\n{2,}/);
@@ -35,6 +44,12 @@
     blocks.forEach((raw) => {
       const block = raw.trim();
       if (!block) return;
+
+      const onlyImg = block.match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/);
+      if (onlyImg) {
+        out.push(figureImg(onlyImg[1], onlyImg[2]));
+        return;
+      }
 
       if (/^##\s/.test(block)) {
         out.push('<h2>' + inline(block.replace(/^##\s+/, '')) + '</h2>');
@@ -55,7 +70,11 @@
       }
 
       const ps = block.split('\n').map((l) => l.trim()).filter(Boolean);
-      ps.forEach((p) => out.push('<p>' + inline(p) + '</p>'));
+      ps.forEach((p) => {
+        const img = p.match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/);
+        if (img) out.push(figureImg(img[1], img[2]));
+        else out.push('<p>' + inline(p) + '</p>');
+      });
     });
 
     return out.join('\n');
@@ -70,23 +89,27 @@
     const photos = (data.photos || []).slice().sort(oldest).slice(0, 5);
 
     setList('[data-slot="articles"]', arts.length ? arts.map((a) => `
-      <a class="entry" href="post.html?p=${encodeURIComponent(a.id)}">
-        <div class="entry__date">${esc(MONTH(a.date).full)}</div>
-        <div>
-          <h3 class="entry__title">${esc(a.title)}</h3>
-          ${a.excerpt ? `<p class="entry__desc">${esc(a.excerpt)}</p>` : ''}
-          <div class="entry__meta">${[].concat(a.tags || [], a.minutes ? a.minutes + ' 分钟' : []).filter(Boolean).map(esc).join(' · ')}</div>
-        </div>
-      </a>`).join('') : '');
+      <div class="adm-host" data-kind="article" data-id="${esc(a.id)}">
+        <a class="entry" href="post.html?p=${encodeURIComponent(a.id)}">
+          <div class="entry__date">${esc(MONTH(a.date).full)}</div>
+          <div>
+            <h3 class="entry__title">${esc(a.title)}</h3>
+            ${a.excerpt ? `<p class="entry__desc">${esc(a.excerpt)}</p>` : ''}
+            <div class="entry__meta">${[].concat(a.tags || [], a.minutes ? a.minutes + ' 分钟' : []).filter(Boolean).map(esc).join(' · ')}</div>
+          </div>
+        </a>
+      </div>`).join('') : '');
 
     setList('[data-slot="notes"]', notes.length ? notes.map((n) => `
-      <article class="note">
+      <article class="note adm-host" data-kind="note" data-id="${esc(n.id)}">
         <div class="note__date">${esc(MONTH(n.date).full)}</div>
-        <p class="note__text">${inline(n.text)}</p>
+        <div class="note__text">${renderBody(n.text)}</div>
       </article>`).join('') : '');
 
     setList('[data-slot="photos"]', photos.length ? photos.map((p) => `
-      <a href="moments.html"><img src="${esc(p.src)}" alt="${esc(p.caption)}" width="${p.width || 1200}" height="${p.height || 1200}" loading="lazy"></a>`).join('') : '');
+      <div class="adm-host strip__cell" data-kind="photo" data-id="${esc(p.id)}">
+        <a href="moments.html"><img src="${esc(p.src)}" alt="${esc(p.caption)}" width="${p.width || 1200}" height="${p.height || 1200}" loading="lazy"></a>
+      </div>`).join('') : '');
   }
 
   /* ---------- 文章列表 ---------- */
@@ -102,11 +125,13 @@
       <section class="year">
         <h2 class="year__label">${esc(y)}</h2>
         ${years[y].map((a) => `
-          <a class="row" href="post.html?p=${encodeURIComponent(a.id)}">
-            <span class="row__date">${esc(MONTH(a.date).md)}</span>
-            <span class="row__title">${esc(a.title)}</span>
-            <span class="row__tags">${(a.tags || []).map(esc).join(' · ')}</span>
-          </a>`).join('')}
+          <div class="adm-host" data-kind="article" data-id="${esc(a.id)}">
+            <a class="row" href="post.html?p=${encodeURIComponent(a.id)}">
+              <span class="row__date">${esc(MONTH(a.date).md)}</span>
+              <span class="row__title">${esc(a.title)}</span>
+              <span class="row__tags">${(a.tags || []).map(esc).join(' · ')}</span>
+            </a>
+          </div>`).join('')}
       </section>`).join(''));
   }
 
@@ -114,9 +139,9 @@
   function renderNotes(data) {
     const notes = (data.notes || []).slice().sort(oldest);
     setList('[data-slot="notes"]', notes.map((n) => `
-      <article class="note">
+      <article class="note adm-host" data-kind="note" data-id="${esc(n.id)}">
         <div class="note__date">${esc(MONTH(n.date).full)}</div>
-        <p class="note__text">${inline(n.text)}</p>
+        <div class="note__text">${renderBody(n.text)}</div>
       </article>`).join(''));
   }
 
@@ -124,7 +149,7 @@
   function renderMoments(data) {
     const photos = (data.photos || []).slice().sort(oldest);
     setList('[data-slot="photos"]', photos.map((p) => `
-      <figure data-src="${esc(p.src)}" data-cap="${esc(p.caption)}">
+      <figure class="adm-host" data-kind="photo" data-id="${esc(p.id)}" data-src="${esc(p.src)}" data-cap="${esc(p.caption)}">
         <img src="${esc(p.src)}" alt="${esc(p.caption)}" width="${p.width || 1200}" height="${p.height || 1200}" loading="lazy">
         <figcaption>${esc(p.caption)}</figcaption>
       </figure>`).join(''));
@@ -170,7 +195,7 @@
     if (meta && art.excerpt) meta.setAttribute('content', art.excerpt);
 
     document.querySelector('[data-slot="post"]').innerHTML = `
-      <article>
+      <article class="adm-host" data-kind="article" data-id="${esc(art.id)}">
         <div class="wrap">
           <header class="article__head">
             <div class="article__meta">

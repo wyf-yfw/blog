@@ -135,8 +135,19 @@
     await commitFile(DATA_PATH, json, message);
   }
 
-  /* ---------- UI ---------- */
-  let root, bar, panel, toastTimer;
+  /* ---------- UI：就地图标，不要底部弹窗 ---------- */
+  let active = false;
+  let toastTimer = 0;
+  let sheetAnchor = null;
+
+  const ICO = {
+    add: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>',
+    del: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M5 11h14v2H5z"/></svg>',
+    edit: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>',
+    close: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M6.4 5l5.6 5.6L17.6 5 19 6.4 13.4 12 19 17.6 17.6 19 12 13.4 6.4 19 5 17.6 10.6 12 5 6.4z"/></svg>'
+  };
+
+  const TITLES = { article: '写文章', note: '记手记', photo: '传照片', about: '改关于' };
 
   function toast(text, kind) {
     let el = document.querySelector('.adm__toast');
@@ -150,35 +161,6 @@
     el.classList.add('is-on');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove('is-on'), 4200);
-  }
-
-  function build() {
-    if (root) return;
-    root = document.createElement('div');
-    root.className = 'adm';
-    root.innerHTML = `
-      <div class="adm__panel" hidden></div>
-      <div class="adm__bar">
-        <span class="adm__tag">编辑模式</span>
-        <button type="button" data-act="article">文章</button>
-        <button type="button" data-act="note">手记</button>
-        <button type="button" data-act="photo">照片</button>
-        <button type="button" data-act="about">关于</button>
-        <button type="button" data-act="backup">备份</button>
-        <button type="button" data-act="exit" class="adm__exit">退出</button>
-      </div>`;
-    document.body.appendChild(root);
-    bar = root.querySelector('.adm__bar');
-    panel = root.querySelector('.adm__panel');
-
-    bar.addEventListener('click', (e) => {
-      const btn = e.target.closest('button');
-      if (!btn) return;
-      const act = btn.dataset.act;
-      if (act === 'exit') return exit();
-      if (act === 'backup') return backup();
-      open(act);
-    });
   }
 
   function backup() {
@@ -204,11 +186,22 @@
         <textarea name="body" rows="12" required placeholder="空一行分段。可用：
 ## 小标题
 > 引用
-- 列表项"></textarea>
-      </label>`,
+- 列表项
+也可以点下面「插入图片」"></textarea>
+      </label>
+      <div class="adm__imgrow">
+        <button type="button" class="adm__imgbtn" data-insert-img>插入图片</button>
+        <input type="file" accept="image/*" hidden data-img-file>
+        <span class="adm__hint">选图后上传并插到光标处，单张建议不超过 5MB</span>
+      </div>`,
     note: () => `
       <label>日期<input name="date" type="date" value="${today()}" required></label>
-      <label>内容<textarea name="text" rows="4" required></textarea></label>
+      <label>内容<textarea name="text" rows="5" required placeholder="想到就写。也可以插入图片。"></textarea></label>
+      <div class="adm__imgrow">
+        <button type="button" class="adm__imgbtn" data-insert-img>插入图片</button>
+        <input type="file" accept="image/*" hidden data-img-file>
+        <span class="adm__hint">选图后上传并插到光标处</span>
+      </div>
       <label>标签（逗号分隔）<input name="tags" placeholder="想法"></label>`,
     photo: () => `
       <label>图片<input name="file" type="file" accept="image/*" required></label>
@@ -220,72 +213,143 @@
       </label>`
   };
 
-  const TITLES = { article: '写文章', note: '记手记', photo: '传照片', about: '改关于' };
+  function clearChrome() {
+    document.querySelectorAll('.adm-tools, .adm-add, .adm-sheet, .adm-chip').forEach((n) => n.remove());
+    document.querySelectorAll('.adm-host.is-about').forEach((n) => {
+      n.classList.remove('adm-host', 'is-about');
+      delete n.dataset.kind;
+    });
+  }
 
-  function open(kind, editing) {
-    build();
-    panel.hidden = false;
-    panel.dataset.kind = kind;
-    panel.innerHTML = `
+  function paintChrome() {
+    if (!active) return;
+    clearChrome();
+
+    const chip = document.createElement('div');
+    chip.className = 'adm-chip';
+    chip.innerHTML = `
+      <span>编辑中</span>
+      <button type="button" data-adm-backup>备份</button>
+      <button type="button" data-adm-exit>退出</button>`;
+    document.body.appendChild(chip);
+
+    placeAdds();
+    paintItemTools();
+  }
+
+  function placeAdds() {
+    const page = document.body.dataset.page;
+    const addNear = (el, kind, label) => {
+      if (!el || el.querySelector('[data-adm-add="' + kind + '"]')) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'adm-add';
+      btn.dataset.admAdd = kind;
+      btn.title = label;
+      btn.innerHTML = ICO.add + '<span>' + label + '</span>';
+      el.appendChild(btn);
+    };
+
+    if (page === 'index' || page === 'home') {
+      document.querySelectorAll('.sec').forEach((sec) => {
+        const head = sec.querySelector('.sec__head');
+        if (!head) return;
+        if (sec.querySelector('[data-slot="articles"]')) addNear(head, 'article', '写文章');
+        if (sec.querySelector('[data-slot="notes"]')) addNear(head, 'note', '记手记');
+        if (sec.querySelector('[data-slot="photos"]')) addNear(head, 'photo', '传照片');
+      });
+    }
+
+    const head = document.querySelector('.page-head');
+    if (page === 'writing') addNear(head, 'article', '写文章');
+    if (page === 'notes') addNear(head, 'note', '记手记');
+    if (page === 'moments') addNear(head, 'photo', '传照片');
+    if (page === 'about' && head) {
+      const aboutBody = document.querySelector('.intro');
+      if (aboutBody) {
+        aboutBody.classList.add('adm-host', 'is-about');
+        aboutBody.dataset.kind = 'about';
+        aboutBody.dataset.id = 'about';
+      }
+      addNear(head, 'about', '改介绍');
+    }
+  }
+
+  function paintItemTools() {
+    document.querySelectorAll('.adm-host[data-kind]').forEach((host) => {
+      if (host.querySelector(':scope > .adm-tools')) return;
+      const kind = host.dataset.kind;
+      const tools = document.createElement('div');
+      tools.className = 'adm-tools';
+      if (kind === 'article' || kind === 'note' || kind === 'about') {
+        tools.innerHTML += `<button type="button" class="adm-ico" data-adm-edit title="编辑">${ICO.edit}</button>`;
+      }
+      if (kind !== 'about') {
+        tools.innerHTML += `<button type="button" class="adm-ico adm-ico--danger" data-adm-del title="删除">${ICO.del}</button>`;
+      }
+      host.appendChild(tools);
+    });
+  }
+
+  function closeSheet() {
+    document.querySelectorAll('.adm-sheet').forEach((n) => n.remove());
+    sheetAnchor = null;
+  }
+
+  function openSheet(kind, anchor, editingId) {
+    closeSheet();
+    sheetAnchor = anchor || null;
+    const sheet = document.createElement('div');
+    sheet.className = 'adm-sheet';
+    sheet.innerHTML = `
       <div class="adm__head">
-        <strong>${TITLES[kind]}</strong>
-        <button type="button" class="adm__close" data-close aria-label="关闭">&times;</button>
+        <strong>${TITLES[kind] || '编辑'}</strong>
+        <button type="button" class="adm__close" data-close aria-label="关闭">${ICO.close}</button>
       </div>
       <form class="adm__form">${FIELDS[kind]()}
         <div class="adm__actions">
           <button type="submit" class="adm__save">保存并发布</button>
+          <button type="button" class="adm__cancel" data-close>取消</button>
           <span class="adm__hint">提交后约 1 分钟生效</span>
         </div>
-      </form>
-      <div class="adm__list"></div>`;
+      </form>`;
 
-    panel.querySelector('[data-close]').onclick = () => { panel.hidden = true; };
+    const mount = anchor
+      || document.querySelector('.page-head')
+      || document.querySelector('main .wrap')
+      || document.querySelector('main');
+    if (anchor && anchor.classList.contains('sec__head')) {
+      anchor.parentElement.insertBefore(sheet, anchor.nextSibling);
+    } else if (anchor && anchor.classList.contains('adm-host')) {
+      anchor.insertAdjacentElement('afterend', sheet);
+    } else {
+      mount.insertAdjacentElement('afterend', sheet);
+    }
 
-    const form = panel.querySelector('form');
+    sheet.querySelectorAll('[data-close]').forEach((b) => {
+      b.addEventListener('click', () => closeSheet());
+    });
+
+    const form = sheet.querySelector('form');
     if (kind === 'about') {
       form.paragraphs.value = ((data().about || {}).paragraphs || []).join('\n\n');
     }
+    if (editingId && kind === 'article') fillArticle(form, editingId);
+    if (editingId && kind === 'note') fillNote(form, editingId);
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       submit(kind, form);
     });
+    if (kind === 'article') wireImageInsert(form, 'body');
+    if (kind === 'note') wireImageInsert(form, 'text');
 
-    listItems(kind);
+    sheet.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  function listItems(kind) {
-    const box = panel.querySelector('.adm__list');
-    if (!box || kind === 'about') return;
-
-    const items = kind === 'article' ? data().articles
-      : kind === 'note' ? data().notes
-      : data().photos;
-
-    if (!items.length) { box.innerHTML = ''; return; }
-
-    box.innerHTML = '<p class="adm__sub">已有的' + (kind === 'photo' ? '照片' : kind === 'note' ? '手记' : '文章') + '</p>' +
-      items.map((it) => `
-        <div class="adm__item">
-          <span>${(it.title || it.caption || it.text || '').slice(0, 26).replace(/</g, '&lt;')}</span>
-          <span class="adm__item-date">${it.date || ''}</span>
-          ${kind === 'article' ? `<button type="button" data-edit="${it.id}">编辑</button>` : ''}
-          <button type="button" data-del="${it.id}">删除</button>
-        </div>`).join('');
-
-    box.addEventListener('click', async (e) => {
-      const del = e.target.closest('[data-del]');
-      const edit = e.target.closest('[data-edit]');
-      if (del) return remove(kind, del.dataset.del);
-      if (edit) return editArticle(edit.dataset.edit);
-    });
-  }
-
-  async function editArticle(id) {
+  function fillArticle(form, id) {
     const art = data().articles.find((a) => a.id === id);
     if (!art) return;
-    open('article');
-    const form = panel.querySelector('form');
     form.title.value = art.title || '';
     form.date.value = art.date || today();
     form.minutes.value = art.minutes || '';
@@ -293,7 +357,64 @@
     form.tags.value = (art.tags || []).join('，');
     form.body.value = art.body || '';
     form.dataset.editing = id;
-    panel.scrollIntoView({ block: 'end' });
+  }
+
+  function fillNote(form, id) {
+    const note = data().notes.find((n) => n.id === id);
+    if (!note) return;
+    form.date.value = note.date || today();
+    form.text.value = note.text || '';
+    form.tags.value = (note.tags || []).join('，');
+    form.dataset.editing = id;
+  }
+
+  function insertAtCursor(ta, text) {
+    const start = ta.selectionStart ?? ta.value.length;
+    const end = ta.selectionEnd ?? ta.value.length;
+    const before = ta.value.slice(0, start);
+    const after = ta.value.slice(end);
+    const padBefore = before && !/\n\n$/.test(before) ? (before.endsWith('\n') ? '\n' : '\n\n') : '';
+    const padAfter = after && !/^\n\n/.test(after) ? (after.startsWith('\n') ? '\n' : '\n\n') : '';
+    const chunk = padBefore + text + padAfter;
+    ta.value = before + chunk + after;
+    const caret = (before + chunk).length;
+    ta.focus();
+    ta.setSelectionRange(caret, caret);
+  }
+
+  function wireImageInsert(form, fieldName) {
+    const ta = form.querySelector(`[name="${fieldName}"]`);
+    const btn = form.querySelector('[data-insert-img]');
+    const fileInput = form.querySelector('[data-img-file]');
+    if (!ta || !btn || !fileInput) return;
+
+    btn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files && fileInput.files[0];
+      fileInput.value = '';
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        toast('图片超过 5MB，请压缩后再试', 'err');
+        return;
+      }
+      const prev = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '上传中…';
+      try {
+        const id = uid();
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+        const src = `assets/img/uploads/${id}.${ext}`;
+        const alt = (file.name.replace(/\.[^.]+$/, '') || '图片').slice(0, 40);
+        await commitFile(src, await base64Of(file), '插图：' + (alt || file.name), true);
+        insertAtCursor(ta, `![${alt}](${src})`);
+        toast('图片已插入正文');
+      } catch (err) {
+        toast('失败：' + err.message, 'err');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = prev;
+      }
+    });
   }
 
   async function remove(kind, id) {
@@ -309,8 +430,8 @@
       pushTimeline(kind, '删除了' + noun + '：' + label.slice(0, 40));
       await saveJson('删除：' + label.slice(0, 40));
       toast('已删除');
+      closeSheet();
       window.KRIS_RERENDER();
-      open(kind);
     } catch (err) {
       toast('失败：' + err.message, 'err');
     }
@@ -345,14 +466,18 @@
       }
 
       if (kind === 'note') {
+        const editing = !!form.dataset.editing;
+        const id = form.dataset.editing || uid();
         const item = {
-          id: uid(),
+          id,
           date: form.date.value || today(),
           text: form.text.value.trim(),
           tags: splitTags(form.tags.value)
         };
-        data().notes.push(item);
-        pushTimeline('note', '记了一笔手记：' + item.text.slice(0, 40));
+        const list = data().notes;
+        const i = list.findIndex((n) => n.id === id);
+        if (i >= 0) list[i] = item; else list.push(item);
+        pushTimeline('note', (editing ? '更新了手记：' : '记了一笔手记：') + item.text.slice(0, 40));
         await saveJson('手记：' + item.text.slice(0, 30));
         toast('已保存，约 1 分钟后线上可见');
       }
@@ -360,21 +485,16 @@
       if (kind === 'photo') {
         const file = form.file.files[0];
         if (!file) throw new Error('先选一张图');
-
         const id = uid();
         const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
         const src = `assets/img/uploads/${id}.${ext}`;
         const dims = await imageSize(file);
-
         await commitFile(src, await base64Of(file), '图片：' + (form.caption.value || file.name), true);
         const caption = form.caption.value.trim();
         data().photos.push({
-          id,
-          src,
-          caption: caption,
+          id, src, caption,
           date: form.date.value || today(),
-          width: dims.w,
-          height: dims.h
+          width: dims.w, height: dims.h
         });
         pushTimeline('photo', '上传了照片：' + (caption || file.name).slice(0, 40));
         await saveJson('照片：' + (caption || file.name));
@@ -389,10 +509,8 @@
         toast('已保存，约 1 分钟后生效');
       }
 
-      form.reset();
-      delete form.dataset.editing;
+      closeSheet();
       window.KRIS_RERENDER();
-      open(kind);
     } catch (err) {
       toast('失败：' + err.message, 'err');
     } finally {
@@ -423,7 +541,6 @@
     });
   }
 
-  /* ---------- 解锁 ---------- */
   function unlock(silent) {
     const guess = prompt('输入编辑密码：');
     if (guess === null) return false;
@@ -431,23 +548,67 @@
       if (!silent) alert('密码不对');
       return false;
     }
-    build();
-    root.hidden = false;
-    if (!silent) toast('编辑模式已开启');
+    active = true;
+    document.body.classList.add('is-editing');
+    paintChrome();
+    if (!silent) toast('编辑模式已开启：点页面上的 + / 编辑 / 删除');
     document.dispatchEvent(new CustomEvent('kris:admin'));
     return true;
   }
 
   function exit() {
-    if (root) root.hidden = true;
+    active = false;
+    document.body.classList.remove('is-editing');
+    closeSheet();
+    clearChrome();
     toast('已退出编辑模式');
   }
 
-  /* ---------- 入口 ---------- */
+  document.addEventListener('click', (e) => {
+    if (!active) return;
+    const exitBtn = e.target.closest('[data-adm-exit]');
+    if (exitBtn) { e.preventDefault(); return exit(); }
+    const backupBtn = e.target.closest('[data-adm-backup]');
+    if (backupBtn) { e.preventDefault(); return backup(); }
+
+    const add = e.target.closest('[data-adm-add]');
+    if (add) {
+      e.preventDefault();
+      const kind = add.dataset.admAdd;
+      if (kind === 'about') return openSheet('about', add.closest('.page-head') || add.parentElement);
+      return openSheet(kind, add.closest('.sec__head') || add.closest('.page-head') || add.parentElement);
+    }
+
+    const edit = e.target.closest('[data-adm-edit]');
+    if (edit) {
+      e.preventDefault();
+      e.stopPropagation();
+      const host = edit.closest('.adm-host');
+      if (!host) return;
+      const kind = host.dataset.kind;
+      const id = host.dataset.id;
+      if (kind === 'about') return openSheet('about', document.querySelector('.page-head') || host);
+      return openSheet(kind, host, id);
+    }
+
+    const del = e.target.closest('[data-adm-del]');
+    if (del) {
+      e.preventDefault();
+      e.stopPropagation();
+      const host = del.closest('.adm-host');
+      if (!host) return;
+      return remove(host.dataset.kind, host.dataset.id);
+    }
+  }, true);
+
+  document.addEventListener('kris:rendered', () => {
+    if (active) paintChrome();
+  });
+
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'e') {
       e.preventDefault();
-      if (root && !root.hidden) exit(); else unlock();
+      if (active) exit(); else unlock();
     }
   });
 
