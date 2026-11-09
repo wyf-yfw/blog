@@ -102,7 +102,7 @@
           <div>
             <h3 class="entry__title">${esc(a.title)}</h3>
             ${a.excerpt ? `<p class="entry__desc">${esc(a.excerpt)}</p>` : ''}
-            <div class="entry__meta">${[].concat(a.tags || [], a.minutes ? a.minutes + ' 分钟' : []).filter(Boolean).map(esc).join(' · ')}</div>
+            <div class="entry__meta">${[].concat(a.category || [], a.tags || [], a.minutes ? a.minutes + ' 分钟' : []).filter(Boolean).map(esc).join(' · ')}</div>
           </div>
         </a>
       </div>`).join('') : '');
@@ -123,8 +123,49 @@
   }
 
   /* ---------- 文章列表 ---------- */
+  const ARTICLE_CATS = ['学记', '省察', '所见', '存档'];
+  let articlesCat = '';
+
+  function articleMeta(a) {
+    return [].concat(a.category || [], a.tags || []).filter(Boolean);
+  }
+
+  function renderArticleFilters(all) {
+    const bar = document.querySelector('[data-slot="article-cats"]');
+    if (!bar) return;
+    if (!all.length) {
+      bar.hidden = true;
+      bar.innerHTML = '';
+      return;
+    }
+    const chip = (label, value) => {
+      const on = (value === '' && !articlesCat) || (value !== '' && articlesCat === value);
+      return `<button type="button" class="ntag${on ? ' is-on' : ''}" data-cat="${esc(value)}">${esc(label)}</button>`;
+    };
+    bar.innerHTML = chip('全部', '') + ARTICLE_CATS.map((c) => chip(c, c)).join('');
+    bar.hidden = false;
+  }
+
   function renderWriting(data) {
-    const arts = (data.articles || []).slice().sort(newest);
+    const all = (data.articles || []).slice().sort(newest);
+    if (articlesCat && !ARTICLE_CATS.includes(articlesCat)) articlesCat = '';
+    renderArticleFilters(all);
+
+    const arts = articlesCat
+      ? all.filter((a) => a.category === articlesCat)
+      : all;
+
+    if (!all.length) {
+      setList('[data-slot="articles"]', '');
+      return;
+    }
+
+    if (!arts.length) {
+      setList('[data-slot="articles"]',
+        `<p class="notes__none">还没有「${esc(articlesCat)}」类的文章。</p>`);
+      return;
+    }
+
     const years = {};
     arts.forEach((a) => {
       const y = MONTH(a.date).y;
@@ -139,11 +180,20 @@
             <a class="row" href="post.html?p=${encodeURIComponent(a.id)}">
               <span class="row__date">${esc(MONTH(a.date).md)}</span>
               <span class="row__title">${esc(a.title)}</span>
-              <span class="row__tags">${(a.tags || []).map(esc).join(' · ')}</span>
+              <span class="row__tags">${articleMeta(a).map(esc).join(' · ')}</span>
             </a>
           </div>`).join('')}
       </section>`).join(''));
   }
+
+  document.addEventListener('click', (e) => {
+    if (document.body.dataset.page !== 'writing') return;
+    const btn = e.target.closest('.ntag[data-cat]');
+    if (!btn) return;
+    e.preventDefault();
+    articlesCat = btn.getAttribute('data-cat') || '';
+    renderWriting(window.KRIS_DATA || { articles: [] });
+  });
 
   /* ---------- 手记 ---------- */
   let notesTag = '';
@@ -287,14 +337,14 @@
             <div class="article__meta">
               <span>${esc(MONTH(art.date).full)}</span>
               ${art.minutes ? `<span>${esc(art.minutes)} 分钟读完</span>` : ''}
-              ${(art.tags || []).length ? `<span>${(art.tags || []).map(esc).join(' · ')}</span>` : ''}
+              ${articleMeta(art).length ? `<span>${articleMeta(art).map(esc).join(' · ')}</span>` : ''}
             </div>
             <h1 class="article__title">${esc(art.title)}</h1>
             ${art.excerpt ? `<p class="article__lede">${esc(art.excerpt)}</p>` : ''}
           </header>
           <div class="prose">${renderBody(art.body)}</div>
           <footer class="article__foot">
-            <div class="article__tags">${(art.tags || []).map(esc).join(' · ')}</div>
+            <div class="article__tags">${articleMeta(art).map(esc).join(' · ')}</div>
             <a class="sec__more" href="writing.html">← 回到文章列表</a>
           </footer>
         </div>

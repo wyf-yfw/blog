@@ -1518,6 +1518,7 @@ body.is-editing .adm-add { display: inline-flex; }
 }
 
 .adm__form input,
+.adm__form select,
 .adm__form textarea {
   display: block;
   width: 100%;
@@ -1533,7 +1534,18 @@ body.is-editing .adm-add { display: inline-flex; }
 }
 
 .adm__form textarea { resize: vertical; font-family: var(--font-serif); font-size: 14px; }
+.adm__form select {
+  cursor: pointer;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 16px) calc(50% - 2px), calc(100% - 11px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 28px;
+}
 .adm__form input:focus,
+.adm__form select:focus,
 .adm__form textarea:focus { outline: 2px solid var(--ink); outline-offset: -1px; }
 .adm__form textarea.is-drop {
   outline: 2px dashed var(--ink);

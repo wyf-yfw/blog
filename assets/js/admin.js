@@ -181,7 +181,15 @@
         <label>阅读分钟<input name="minutes" type="number" min="1" max="99" placeholder="选填"></label>
       </div>
       <label>摘要（列表和首页显示的一句话）<input name="excerpt" maxlength="200"></label>
-      <label>标签（逗号分隔）<input name="tags" placeholder="生活，东京"></label>
+      <label>类别
+        <select name="category" required>
+          <option value="学记">学记 — 学某个东西的过程与结论</option>
+          <option value="省察">省察 — 对自己与他人的行为、念头</option>
+          <option value="所见">所见 — 对事的看法、判断与展望</option>
+          <option value="存档">存档 — 人生节点的正式记录</option>
+        </select>
+      </label>
+      <label>主题词（可选，逗号分隔）<input name="tags" placeholder="比如：东京，读书"></label>
       <label>正文
         <textarea name="body" rows="12" required placeholder="空一行分段。可用：
 ## 小标题
@@ -354,6 +362,7 @@
     form.date.value = art.date || today();
     form.minutes.value = art.minutes || '';
     form.excerpt.value = art.excerpt || '';
+    form.category.value = art.category || '学记';
     form.tags.value = (art.tags || []).join('，');
     form.body.value = art.body || '';
     form.dataset.editing = id;
@@ -525,6 +534,7 @@
           date: form.date.value || today(),
           title: form.title.value.trim(),
           excerpt: form.excerpt.value.trim(),
+          category: form.category.value || '学记',
           tags: splitTags(form.tags.value),
           minutes: form.minutes.value ? Number(form.minutes.value) : null,
           body: form.body.value

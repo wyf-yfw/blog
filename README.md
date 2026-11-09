@@ -91,7 +91,7 @@ Repository permissions → **Contents: Read and write** → 生成后复制。
   "about": { "paragraphs": ["第一段", "第二段"] },
   "articles": [
     { "id": "唯一 id", "date": "2026-11-09", "title": "标题",
-      "excerpt": "摘要", "tags": ["生活"], "minutes": 8,
+      "excerpt": "摘要", "category": "学记", "tags": ["可选主题词"], "minutes": 8,
       "body": "空一行分段。\n\n## 小标题\n\n> 引用\n\n- 列表项" }
   ],
   "notes": [
