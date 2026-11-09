@@ -152,7 +152,9 @@
     return ARTICLE_CATS.includes(c) ? c : '';
   }
 
-  let articlesCat = catFromUrl();
+  let articlesCat = (typeof window.KRIS_ARTICLE_CAT === 'string' && ARTICLE_CATS.includes(window.KRIS_ARTICLE_CAT))
+    ? window.KRIS_ARTICLE_CAT
+    : catFromUrl();
 
   function syncCatUrl(cat) {
     if (document.body.dataset.page !== 'writing') return;

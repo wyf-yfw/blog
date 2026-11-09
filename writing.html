@@ -53,6 +53,25 @@
       <h2 class="page-head__sub" data-writing-sub hidden></h2>
       <p class="page-head__desc" data-writing-desc>我的语言的界限，意味着我的世界的界限。</p>
     </div>
+    <script>
+    /* 在 site.js 加载前按 ?cat= 写好页头，避免先闪总页标语 */
+    (function () {
+      var heads = {
+        '学记': '弄懂一件事，再把它写明白。',
+        '省察': '行为背后，总有未被说出的理由。',
+        '所见': '对这件事怎么看，以及它通向何处。',
+        '存档': '把人生里真正重要的几天留下来。'
+      };
+      var cat = new URLSearchParams(location.search).get('cat') || '';
+      if (!heads[cat]) return;
+      var sub = document.querySelector('[data-writing-sub]');
+      var desc = document.querySelector('[data-writing-desc]');
+      if (sub) { sub.textContent = cat; sub.hidden = false; }
+      if (desc) desc.textContent = heads[cat];
+      document.title = cat + ' — Kris';
+      window.KRIS_ARTICLE_CAT = cat;
+    })();
+    </script>
     <div class="ntags" data-slot="article-cats" hidden></div>
     <div data-slot="articles"></div>
     <p class="empty">还没有文章。</p>
@@ -81,7 +100,7 @@
 </footer>
 
 <script src="assets/js/main.js?v=20261109x"></script>
-<script src="assets/js/site.js?v=20261109q"></script>
+<script src="assets/js/site.js?v=20261109r"></script>
 <script src="assets/js/admin.js?v=20261109q"></script>
 </body>
 </html>
