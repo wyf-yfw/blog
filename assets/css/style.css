@@ -198,6 +198,65 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 
 .hero__links a:hover { color: var(--ink); border-color: var(--ink); }
 
+/* ---------- 5.5 社交图标 ---------- */
+.sicons {
+  display: grid;
+  grid-template-columns: repeat(4, 40px);
+  gap: 14px;
+  margin-top: clamp(28px, 4vw, 40px);
+}
+
+.sicon {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--muted);
+  transition:
+    color .24s var(--ease),
+    border-color .24s var(--ease),
+    background-color .24s var(--ease),
+    transform .24s var(--ease),
+    opacity .24s var(--ease);
+}
+
+.sicon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: sicon-in .7s var(--ease) forwards;
+  animation-delay: calc(var(--i) * 55ms + 120ms);
+}
+
+@keyframes sicon-in {
+  to { opacity: 1; transform: none; }
+}
+
+/* 悬停：整组退后，被指的那个回到墨色并上浮 */
+.sicons:hover .sicon { opacity: .3; }
+
+.sicons:hover .sicon:hover,
+.sicon:focus-visible {
+  opacity: 1;
+  color: var(--ink);
+  border-color: var(--ink);
+  background: var(--paper-2);
+  transform: translateY(-2px);
+}
+
+.sicon:active { transform: translateY(0) scale(.97); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sicon svg { animation: none; opacity: 1; transform: none; }
+  .sicon { transition: none; }
+}
+
 /* ---------- 6. Section ---------- */
 .sec { margin-top: clamp(56px, 7vw, 88px); }
 
@@ -945,6 +1004,9 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   .nav__link:last-child { border-bottom: 0; }
   .nav__toggle { display: inline-flex; }
 
+  .sicons { grid-template-columns: repeat(4, 36px); gap: 12px; }
+  .sicon { width: 36px; height: 36px; }
+  .sicon svg { width: 15px; height: 15px; }
   .entry { grid-template-columns: 1fr; gap: 10px; }
   .entry__date { padding-top: 0; }
   .row { grid-template-columns: 64px 1fr; gap: 6px 18px; }
