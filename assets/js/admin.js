@@ -1,6 +1,6 @@
 /* ==========================================================================
    Kris — 编辑模式
-   只有拿着 GitHub 令牌的人能解锁；令牌只存在本机 localStorage，不进仓库。
+   用密码开门；保存到仓库时才用 GitHub 令牌（只存在本机，退出不清）。
    内容写到 content/site.json，代码更新不会碰这个文件。
    ========================================================================== */
 
@@ -10,6 +10,7 @@
   const REPO = 'wyf-yfw/blog';
   const BRANCH = 'main';
   const DATA_PATH = 'content/site.json';
+  const PASS = 'wyf040108';
   const TOKEN_KEY = 'kris.gh.token';
   const API = 'https://api.github.com';
 
@@ -20,11 +21,22 @@
   const data = () => window.KRIS_DATA || (window.KRIS_DATA = { about: { paragraphs: [] }, articles: [], notes: [], photos: [] });
 
   /* ---------- GitHub ---------- */
+  // 发布还是走 GitHub API，令牌只在第一次保存时问一次，之后留在本机
+  function ensureToken() {
+    let t = token();
+    if (t) return t;
+    t = prompt('第一次发布需要粘贴 GitHub 令牌（之后不用再输，只存在这台设备）：');
+    if (!t) throw new Error('取消了，没有令牌就发不上去');
+    t = t.trim();
+    localStorage.setItem(TOKEN_KEY, t);
+    return t;
+  }
+
   async function gh(path, opts) {
     const res = await fetch(API + path, {
       ...opts,
       headers: {
-        Authorization: 'Bearer ' + token(),
+        Authorization: 'Bearer ' + ensureToken(),
         Accept: 'application/vnd.github+json',
         ...(opts && opts.headers)
       }
@@ -32,6 +44,7 @@
     if (!res.ok) {
       let detail = '';
       try { detail = (await res.json()).message || ''; } catch (e) { /* ignore */ }
+      if (res.status === 401 || res.status === 403) localStorage.removeItem(TOKEN_KEY);
       const err = new Error(detail || res.statusText || ('HTTP ' + res.status));
       err.status = res.status;
       throw err;
@@ -44,10 +57,6 @@
     let bin = '';
     bytes.forEach((b) => { bin += String.fromCharCode(b); });
     return btoa(bin);
-  }
-
-  async function whoami() {
-    return gh('/user');
   }
 
   async function commitFile(path, content, message, isBase64) {
@@ -356,31 +365,21 @@
   }
 
   /* ---------- 解锁 ---------- */
-  async function unlock(silent) {
-    let t = token();
-    if (!t) {
-      t = prompt('粘贴 GitHub 令牌（只存在这台设备的浏览器里，不会进仓库）：');
-      if (!t) return false;
-      t = t.trim();
-    }
-    localStorage.setItem(TOKEN_KEY, t);
-
-    try {
-      const me = await whoami();
-      build();
-      root.hidden = false;
-      if (!silent) toast('编辑模式已开启 · ' + me.login);
-      document.dispatchEvent(new CustomEvent('kris:admin'));
-      return true;
-    } catch (err) {
-      localStorage.removeItem(TOKEN_KEY);
-      if (!silent) alert('令牌无效或没有权限：' + err.message);
+  function unlock(silent) {
+    const guess = prompt('输入编辑密码：');
+    if (guess === null) return false;
+    if (guess !== PASS) {
+      if (!silent) alert('密码不对');
       return false;
     }
+    build();
+    root.hidden = false;
+    if (!silent) toast('编辑模式已开启');
+    document.dispatchEvent(new CustomEvent('kris:admin'));
+    return true;
   }
 
   function exit() {
-    localStorage.removeItem(TOKEN_KEY);
     if (root) root.hidden = true;
     toast('已退出编辑模式');
   }
@@ -393,7 +392,7 @@
     }
   });
 
-  if (/[?&]admin=1/.test(location.search) && token()) {
+  if (/[?&]admin=1/.test(location.search)) {
     document.addEventListener('kris:rendered', () => unlock(true), { once: true });
   }
 })();

@@ -47,20 +47,21 @@ site/
 
 ## 在网页里写内容（不用命令行）
 
-1. 先做一个 GitHub 令牌（只需要一次）：
-   GitHub → 头像 → Settings → Developer settings → **Personal access tokens → Fine-grained tokens**
-   → Generate new token → 仓库选 **Only select repositories → wyf-yfw/blog**
-   → Permissions → Repository permissions → **Contents: Read and write**
-   → 生成后复制，只显示一次
-2. 打开 https://kriswang.me ，按 **Ctrl + Shift + E**（Mac 是 ⌘ + Shift + E）
-3. 第一次会让你粘贴令牌，粘完回车。令牌只存在这台设备的浏览器里，不会进仓库
-4. 底部出现黑色工具条：「文章 / 手记 / 照片 / 关于」，点进去写，点「保存并发布」
-5. 约 1 分钟后线上生效；想退出就点「退出」，会清掉本机存的令牌
+1. 打开 https://kriswang.me ，按 **Ctrl + Shift + E**（Mac 是 ⌘ + Shift + E）
+2. 输入编辑密码，底部出现黑色工具条：「文章 / 手记 / 照片 / 关于」
+3. 点进去写，点「保存并发布」。**第一次发布**时会再要一次 GitHub 令牌（写进仓库用的），
+   粘完以后只存在这台设备的浏览器里，退出编辑模式也不会清掉，下次不用再输
+4. 约 1 分钟后线上生效；想退出就点「退出」或再按一次快捷键
+
+做令牌（只需要一次）：GitHub → 头像 → Settings → Developer settings →
+**Personal access tokens → Fine-grained tokens** → Generate new token →
+仓库选 **Only select repositories → wyf-yfw/blog** → Permissions →
+Repository permissions → **Contents: Read and write** → 生成后复制。
 
 工具条上的「备份」会把当前 `content/site.json` 下载一份，留个底。
 
-只有在浏览器里存过令牌的人能解锁编辑模式，没有令牌谁都写不进去——
-网页里的按钮只是隐藏，真正的权限在 GitHub 那边。
+编辑面板用密码挡一下随手乱点；真正写进仓库还是靠 GitHub 令牌的权限。
+密码写在前端，能看源码的人也能看到，别拿它当保险箱。
 
 ## 联系方式
 
