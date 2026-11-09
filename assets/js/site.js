@@ -110,7 +110,10 @@
     setList('[data-slot="notes"]', notes.length ? notes.map((n) => `
       <article class="note adm-host" data-kind="note" data-id="${esc(n.id)}">
         <div class="note__date">${esc(MONTH(n.date).full)}</div>
-        <div class="note__text">${renderBody(n.text)}</div>
+        <div class="note__main">
+          <div class="note__text">${renderBody(n.text)}</div>
+          ${noteTagsHtml(n.tags, false)}
+        </div>
       </article>`).join('') : '');
 
     setList('[data-slot="photos"]', photos.length ? photos.map((p) => `
@@ -143,14 +146,90 @@
   }
 
   /* ---------- 手记 ---------- */
+  let notesTag = '';
+
+  function noteTagsHtml(tags, clickable) {
+    const list = (tags || []).filter(Boolean);
+    if (!list.length) return '';
+    if (!clickable) {
+      return `<div class="note__tags">${list.map((t) =>
+        `<span class="note__tag">${esc(t)}</span>`).join('')}</div>`;
+    }
+    return `<div class="note__tags">${list.map((t) =>
+      `<button type="button" class="note__tag${notesTag === t ? ' is-on' : ''}" data-tag="${esc(t)}">${esc(t)}</button>`
+    ).join('')}</div>`;
+  }
+
+  function collectNoteTags(notes) {
+    const seen = new Set();
+    const out = [];
+    notes.forEach((n) => {
+      (n.tags || []).forEach((t) => {
+        if (!t || seen.has(t)) return;
+        seen.add(t);
+        out.push(t);
+      });
+    });
+    return out.sort((a, b) => a.localeCompare(b, 'zh'));
+  }
+
+  function renderNoteFilters(notes) {
+    const tags = collectNoteTags(notes);
+    const bar = document.querySelector('[data-slot="note-tags"]');
+    if (!bar) return;
+    if (!tags.length) {
+      bar.hidden = true;
+      bar.innerHTML = '';
+      return;
+    }
+    const chip = (label, value) => {
+      const on = (value === '' && !notesTag) || (value !== '' && notesTag === value);
+      return `<button type="button" class="ntag${on ? ' is-on' : ''}" data-tag="${esc(value)}">${esc(label)}</button>`;
+    };
+    bar.innerHTML = chip('全部', '') + tags.map((t) => chip(t, t)).join('');
+    bar.hidden = false;
+  }
+
   function renderNotes(data) {
-    const notes = (data.notes || []).slice().sort(newest);
+    const all = (data.notes || []).slice().sort(newest);
+    if (notesTag && !all.some((n) => (n.tags || []).includes(notesTag))) {
+      notesTag = '';
+    }
+    renderNoteFilters(all);
+
+    const notes = notesTag
+      ? all.filter((n) => (n.tags || []).includes(notesTag))
+      : all;
+
+    if (!all.length) {
+      setList('[data-slot="notes"]', '');
+      return;
+    }
+
+    if (!notes.length) {
+      setList('[data-slot="notes"]',
+        `<p class="notes__none">没有「${esc(notesTag)}」这个标签的手记。</p>`);
+      return;
+    }
+
     setList('[data-slot="notes"]', notes.map((n) => `
       <article class="note adm-host" data-kind="note" data-id="${esc(n.id)}">
         <div class="note__date">${esc(MONTH(n.date).full)}</div>
-        <div class="note__text">${renderBody(n.text)}</div>
+        <div class="note__main">
+          <div class="note__text">${renderBody(n.text)}</div>
+          ${noteTagsHtml(n.tags, true)}
+        </div>
       </article>`).join(''));
   }
+
+  document.addEventListener('click', (e) => {
+    if (document.body.dataset.page !== 'notes') return;
+    const btn = e.target.closest('.ntag[data-tag], .note__tag[data-tag]');
+    if (!btn) return;
+    e.preventDefault();
+    notesTag = btn.getAttribute('data-tag') || '';
+    renderNotes(window.KRIS_DATA || { notes: [] });
+  });
 
   /* ---------- 照片 ---------- */
   function renderMoments(data) {

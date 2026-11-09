@@ -560,6 +560,8 @@ body.is-leaving .foot {
   margin-bottom: 10px;
 }
 
+.note__main { min-width: 0; }
+
 .note__text {
   font-size: var(--fs-sm);
   line-height: 1.85;
@@ -572,6 +574,70 @@ body.is-leaving .foot {
   background: var(--paper-2);
   padding: 1px 5px;
   border-radius: 2px;
+}
+
+.note__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-top: 10px;
+}
+
+.note__tag {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: default;
+}
+
+button.note__tag {
+  cursor: pointer;
+  transition: color .18s var(--ease);
+}
+
+button.note__tag:hover,
+button.note__tag.is-on {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ntags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 4px 0 28px;
+}
+
+.ntag {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: color .18s var(--ease);
+}
+
+.ntag:hover,
+.ntag.is-on {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.notes__none {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  padding: 8px 0 24px;
+  border-bottom: 1px solid var(--line);
+  margin: 0;
 }
 
 /* ---------- 9. 照片带 ---------- */
@@ -776,6 +842,8 @@ body.is-leaving .foot {
   font-size: var(--fs-body);
   max-width: 34em;
 }
+
+.notes--page .note__tags { margin-top: 12px; }
 
 /* ---------- 14. 照片墙 ---------- */
 /* 没有 JS 时退化成三栏 CSS columns；有 JS 时按图片高度分配到最短的一栏 */
