@@ -178,6 +178,53 @@
   }
 
 
+
+  /* ---------- 导航黑线 ---------- */
+  const navLinks = document.querySelector('.nav__links');
+  const navLine = document.querySelector('[data-nav-line]');
+  const links = navLinks ? Array.from(navLinks.querySelectorAll('.nav__link')) : [];
+  const activeIndex = () => links.findIndex((a) => a.getAttribute('aria-current') === 'page');
+
+  function placeLine(link, animate) {
+    if (!navLine || !link) return;
+    const left = link.offsetLeft;
+    const width = link.offsetWidth;
+    if (!animate) navLine.classList.remove('is-ready');
+    navLine.style.width = width + 'px';
+    navLine.style.transform = 'translateX(' + left + 'px)';
+    if (!animate) {
+      void navLine.offsetWidth;   // 先落位再加过渡，避免首帧也跟着补间
+      navLine.classList.add('is-ready');
+    }
+  }
+
+  if (navLinks && navLine && links.length) {
+    const from = sessionStorage.getItem('nav-from');
+    sessionStorage.removeItem('nav-from');
+    const current = activeIndex();
+
+    if (from !== null && Number(from) !== current && Number.isFinite(Number(from))) {
+      // 从上一页的位置起步，下一帧滑到当前页
+      placeLine(links[Number(from)], false);
+      requestAnimationFrame(() => requestAnimationFrame(() => placeLine(links[current], true)));
+    } else {
+      placeLine(links[current], false);
+    }
+
+    // 悬停时黑线临时滑过去，移开再回当前页
+    navLinks.addEventListener('mouseover', (e) => {
+      const link = e.target.closest('.nav__link');
+      if (link) placeLine(link, true);
+    });
+    navLinks.addEventListener('mouseleave', () => placeLine(links[current], true));
+
+    // 字体加载完成后宽度会变，重新量一次
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => placeLine(links[activeIndex()], false));
+    }
+    window.addEventListener('resize', () => placeLine(links[activeIndex()], false));
+  }
+
   /* ---------- 页面转场 ---------- */
   // 点站内链接时整页淡出再跳转；只拦普通左键点击，新窗口/下载/锚点都不动
   document.addEventListener('click', (e) => {
@@ -194,6 +241,10 @@
     if (url.pathname === location.pathname && url.search === location.search) return;
 
     e.preventDefault();
+    if (navLinks) {
+      const i = Array.from(navLinks.querySelectorAll('.nav__link')).indexOf(a.closest('.nav__link'));
+      if (i >= 0) sessionStorage.setItem('nav-from', String(i));
+    }
     document.body.classList.add('is-leaving');
     setTimeout(() => { location.href = url.href; }, 190);
   });

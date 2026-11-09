@@ -102,13 +102,16 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 @keyframes drop-in   { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 @keyframes panel-in  { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
-/* 不加 fill：动画结束后控制权交回 opacity，离场淡出才能生效 */
-body { animation: page-in .34s var(--ease); }
+/* 只有正文和页脚淡入淡出，导航栏保持不动；
+   不加 animation-fill，动画结束后控制权交回 opacity，离场淡出才生效 */
+main, .foot { animation: page-in .34s var(--ease); }
 
-/* 离场：点内部链接时整页淡出，再跳转 */
-body.is-leaving {
+/* 离场：点内部链接时正文淡出，导航保持原位 */
+main, .foot { transition: opacity .2s var(--ease); }
+
+body.is-leaving main,
+body.is-leaving .foot {
   opacity: 0;
-  transition: opacity .2s var(--ease);
   pointer-events: none;
 }
 
@@ -182,11 +185,25 @@ body.is-leaving {
 .nav__link:hover { color: var(--ink); }
 .nav__link:hover::after { right: 0; }
 
-.nav__link[aria-current="page"] {
-  color: var(--ink);
+.nav__link[aria-current="page"] { color: var(--ink); }
+
+/* 当前页的黑线：跨页面时从左一条滑到新的位置 */
+.nav__line {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 1px;
+  width: 0;
+  background: var(--ink);
+  opacity: 0;
+  transform: translateX(0);
+  will-change: transform, width;
 }
 
-.nav__link[aria-current="page"]::after { right: 0; }
+.nav__line.is-ready {
+  opacity: 1;
+  transition: transform .42s var(--ease), width .42s var(--ease);
+}
 
 .nav__toggle {
   display: none;
@@ -1048,6 +1065,7 @@ body.is-leaving {
   }
 
   .nav__link:last-child { border-bottom: 0; }
+  .nav__line { display: none; }
   .nav__toggle { display: inline-flex; }
 
   .sicons { gap: 11px; }
