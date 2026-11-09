@@ -124,6 +124,28 @@
 
   /* ---------- 文章列表 ---------- */
   const ARTICLE_CATS = ['学记', '省察', '所见', '存档'];
+  const ARTICLE_HEAD = {
+    '': {
+      title: '文章 — Kris',
+      desc: '我的语言的界限，意味着我的世界的界限。'
+    },
+    '学记': {
+      title: '学记 — Kris',
+      desc: '弄懂一件事，再把它写明白。'
+    },
+    '省察': {
+      title: '省察 — Kris',
+      desc: '行为背后，总有未被说出的理由。'
+    },
+    '所见': {
+      title: '所见 — Kris',
+      desc: '对这件事怎么看，以及它通向何处。'
+    },
+    '存档': {
+      title: '存档 — Kris',
+      desc: '把人生里真正重要的几天留下来。'
+    }
+  };
 
   function catFromUrl() {
     const c = new URLSearchParams(location.search).get('cat') || '';
@@ -142,6 +164,24 @@
 
   function articleMeta(a) {
     return [].concat(a.category || [], a.tags || []).filter(Boolean);
+  }
+
+  function renderWritingHead() {
+    const head = document.querySelector('[data-slot="writing-head"]');
+    if (!head) return;
+    const sub = head.querySelector('[data-writing-sub]');
+    const desc = head.querySelector('[data-writing-desc]');
+    const meta = ARTICLE_HEAD[articlesCat] || ARTICLE_HEAD[''];
+    document.title = meta.title;
+    if (desc) desc.textContent = meta.desc;
+    if (!sub) return;
+    if (articlesCat) {
+      sub.textContent = articlesCat;
+      sub.hidden = false;
+    } else {
+      sub.textContent = '';
+      sub.hidden = true;
+    }
   }
 
   function renderArticleFilters(all) {
@@ -163,6 +203,7 @@
   function renderWriting(data) {
     const all = (data.articles || []).slice().sort(newest);
     if (articlesCat && !ARTICLE_CATS.includes(articlesCat)) articlesCat = '';
+    renderWritingHead();
     renderArticleFilters(all);
 
     const arts = articlesCat
@@ -208,6 +249,7 @@
     articlesCat = btn.getAttribute('data-cat') || '';
     syncCatUrl(articlesCat);
     renderWriting(window.KRIS_DATA || { articles: [] });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   /* ---------- 手记 ---------- */

@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,300..600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20261109u">
+<link rel="stylesheet" href="assets/css/style.css?v=20261109v">
 </head>
 <body data-page="writing">
 
@@ -48,9 +48,10 @@
 
 <main id="main">
   <div class="wrap">
-    <div class="page-head reveal">
+    <div class="page-head reveal" data-slot="writing-head">
       <h1 class="page-head__title">文章</h1>
-      <p class="page-head__desc">我的语言的界限，意味着我的世界的界限。</p>
+      <h2 class="page-head__sub" data-writing-sub hidden></h2>
+      <p class="page-head__desc" data-writing-desc>我的语言的界限，意味着我的世界的界限。</p>
     </div>
     <div class="ntags" data-slot="article-cats" hidden></div>
     <div data-slot="articles"></div>
@@ -80,7 +81,7 @@
 </footer>
 
 <script src="assets/js/main.js?v=20261109x"></script>
-<script src="assets/js/site.js?v=20261109p"></script>
+<script src="assets/js/site.js?v=20261109q"></script>
 <script src="assets/js/admin.js?v=20261109q"></script>
 </body>
 </html>
