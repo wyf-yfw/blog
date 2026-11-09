@@ -396,21 +396,22 @@
     const meta = document.querySelector('#post-desc');
     if (meta && art.excerpt) meta.setAttribute('content', art.excerpt);
 
+    const metaBits = [MONTH(art.date).full]
+      .concat(art.minutes ? art.minutes + ' 分钟读完' : [])
+      .concat(art.category || [])
+      .concat(art.tags || [])
+      .filter(Boolean);
+
     document.querySelector('[data-slot="post"]').innerHTML = `
       <article class="adm-host" data-kind="article" data-id="${esc(art.id)}">
         <div class="wrap">
           <header class="article__head">
-            <div class="article__meta">
-              <span>${esc(MONTH(art.date).full)}</span>
-              ${art.minutes ? `<span>${esc(art.minutes)} 分钟读完</span>` : ''}
-              ${articleMeta(art).length ? `<span>${articleMeta(art).map(esc).join(' · ')}</span>` : ''}
-            </div>
             <h1 class="article__title">${esc(art.title)}</h1>
+            ${metaBits.length ? `<div class="article__meta">${metaBits.map(esc).join(' · ')}</div>` : ''}
             ${art.excerpt ? `<p class="article__lede">${esc(art.excerpt)}</p>` : ''}
           </header>
-          <div class="prose">${renderBody(art.body)}</div>
-          <footer class="article__foot">
-            <div class="article__tags">${articleMeta(art).map(esc).join(' · ')}</div>
+          <div class="prose${art.excerpt ? ' prose--after-lede' : ''}">${renderBody(art.body)}</div>
+          <footer class="article__foot article__foot--solo">
             <a class="sec__more" href="writing.html">← 回到文章列表</a>
           </footer>
         </div>
