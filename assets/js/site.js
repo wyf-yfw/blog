@@ -81,13 +81,19 @@
     return out.join('\n');
   }
 
-  const oldest = (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+  // 最新在上：先比日期，同一天再比 id（后创建的 id 更大）
+  const newest = (a, b) => {
+    const da = a.date || '';
+    const db = b.date || '';
+    if (da !== db) return da < db ? 1 : -1;
+    return String(b.id || '').localeCompare(String(a.id || ''));
+  };
 
   /* ---------- 首页 ---------- */
   function renderHome(data) {
-    const arts = (data.articles || []).slice().sort(oldest).slice(0, 3);
-    const notes = (data.notes || []).slice().sort(oldest).slice(0, 6);
-    const photos = (data.photos || []).slice().sort(oldest).slice(0, 5);
+    const arts = (data.articles || []).slice().sort(newest).slice(0, 3);
+    const notes = (data.notes || []).slice().sort(newest).slice(0, 6);
+    const photos = (data.photos || []).slice().sort(newest).slice(0, 5);
 
     setList('[data-slot="articles"]', arts.length ? arts.map((a) => `
       <div class="adm-host" data-kind="article" data-id="${esc(a.id)}">
@@ -115,7 +121,7 @@
 
   /* ---------- 文章列表 ---------- */
   function renderWriting(data) {
-    const arts = (data.articles || []).slice().sort(oldest);
+    const arts = (data.articles || []).slice().sort(newest);
     const years = {};
     arts.forEach((a) => {
       const y = MONTH(a.date).y;
@@ -138,7 +144,7 @@
 
   /* ---------- 手记 ---------- */
   function renderNotes(data) {
-    const notes = (data.notes || []).slice().sort(oldest);
+    const notes = (data.notes || []).slice().sort(newest);
     setList('[data-slot="notes"]', notes.map((n) => `
       <article class="note adm-host" data-kind="note" data-id="${esc(n.id)}">
         <div class="note__date">${esc(MONTH(n.date).full)}</div>
@@ -148,7 +154,7 @@
 
   /* ---------- 照片 ---------- */
   function renderMoments(data) {
-    const photos = (data.photos || []).slice().sort(oldest);
+    const photos = (data.photos || []).slice().sort(newest);
     setList('[data-slot="photos"]', photos.map((p) => `
       <figure class="adm-host" data-kind="photo" data-id="${esc(p.id)}" data-src="${esc(p.src)}" data-cap="${esc(p.caption)}">
         <img src="${esc(p.src)}" alt="${esc(p.caption)}" width="${p.width || 1200}" height="${p.height || 1200}" loading="lazy">
