@@ -37,14 +37,16 @@
     nav.addEventListener('click', (e) => {
       const dropLink = e.target.closest('.nav__drop > .nav__link');
       if (dropLink && desktopNav()) {
-        e.preventDefault();
         const drop = dropLink.closest('.nav__drop');
-        const willOpen = !drop.classList.contains('is-open');
-        closeDrops();
-        if (willOpen) {
-          drop.classList.add('is-open');
-          dropLink.setAttribute('aria-expanded', 'true');
+        // 已展开时再点一次「文章」→ 进入总页；第一次只展开菜单
+        if (drop.classList.contains('is-open')) {
+          closeDrops();
+          return;
         }
+        e.preventDefault();
+        closeDrops();
+        drop.classList.add('is-open');
+        dropLink.setAttribute('aria-expanded', 'true');
         return;
       }
 
