@@ -179,6 +179,114 @@
 
 
 
+
+
+  /* ---------- 首屏引文视差 ---------- */
+  function initHeroParallax() {
+    const hero = document.querySelector('.hero');
+    const q = hero && hero.querySelector('.q');
+    if (!hero || !q) return;
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let tx = 0, ty = 0, x = 0, y = 0, raf = 0;
+
+    function run() {
+      x += (tx - x) * 0.08;
+      y += (ty - y) * 0.08;
+      q.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
+      if (Math.abs(tx - x) > 0.05 || Math.abs(ty - y) > 0.05) {
+        raf = requestAnimationFrame(run);
+      } else {
+        raf = 0;
+      }
+    }
+
+    hero.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      const r = hero.getBoundingClientRect();
+      const dx = (e.clientX - r.left) / r.width - 0.5;
+      const dy = (e.clientY - r.top) / r.height - 0.5;
+      tx = -dx * 14;
+      ty = -dy * 10;
+      if (!raf) raf = requestAnimationFrame(run);
+    });
+
+    hero.addEventListener('pointerleave', () => {
+      tx = 0; ty = 0;
+      if (!raf) raf = requestAnimationFrame(run);
+    });
+  }
+
+  /* ---------- 自定义光标 ---------- */
+  // 只在精确指针设备（鼠标）且没开「减少动态效果」时接管
+  function initCursor() {
+    const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!fine || calm) return;
+
+    const el = document.createElement('div');
+    el.className = 'cursor';
+    el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = '<span class="cursor__ring"></span><span class="cursor__dot"></span>';
+    document.body.appendChild(el);
+    document.documentElement.classList.add('has-cursor');
+
+    let tx = window.innerWidth / 2;
+    let ty = window.innerHeight / 2;
+    let x = tx;
+    let y = ty;
+    let visible = false;
+    let running = true;
+
+    const hot = 'a, button, [role="button"], .sicon, figure[data-src], .nav__toggle, .q__toggle';
+
+    function frame() {
+      if (!running) return;
+      x += (tx - x) * 0.18;
+      y += (ty - y) * 0.18;
+      el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      requestAnimationFrame(frame);
+    }
+
+    document.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      tx = e.clientX;
+      ty = e.clientY;
+      if (!visible) {
+        x = tx;
+        y = ty;
+        visible = true;
+        el.classList.add('is-on');
+      }
+    }, { passive: true });
+
+    document.addEventListener('pointerover', (e) => {
+      el.classList.toggle('is-hot', !!e.target.closest(hot));
+      el.style.opacity = e.target.closest('.adm') ? '0' : '';
+    });
+
+    document.addEventListener('pointerdown', () => el.classList.add('is-down'));
+    document.addEventListener('pointerup', () => el.classList.remove('is-down'));
+
+    document.addEventListener('pointerleave', () => {
+      visible = false;
+      el.classList.remove('is-on');
+    });
+
+    window.addEventListener('blur', () => {
+      visible = false;
+      el.classList.remove('is-on');
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      running = !document.hidden;
+      if (running) requestAnimationFrame(frame);
+    });
+
+    requestAnimationFrame(frame);
+  }
+
   /* ---------- 导航黑线 ---------- */
   const navLinks = document.querySelector('.nav__links');
   const navLine = document.querySelector('[data-nav-line]');
@@ -302,9 +410,11 @@
 
   document.addEventListener('kris:rendered', () => { initPhotos(); markContent(); });
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => observeReveal());
+    document.addEventListener('DOMContentLoaded', () => { observeReveal(); initCursor(); initHeroParallax(); });
   } else {
     observeReveal();
+    initCursor();
+    initHeroParallax();
   }
 
   // 没有 IntersectionObserver 或脚本报错时，别让内容一直隐身
