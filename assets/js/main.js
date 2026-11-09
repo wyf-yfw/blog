@@ -177,5 +177,87 @@
     lb.addEventListener('click', (e) => { if (e.target === lb) close(); });
   }
 
-  document.addEventListener('kris:rendered', initPhotos);
+
+  /* ---------- 页面转场 ---------- */
+  // 点站内链接时整页淡出再跳转；只拦普通左键点击，新窗口/下载/锚点都不动
+  document.addEventListener('click', (e) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+    const a = e.target.closest('a[href]');
+    if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+
+    const href = a.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+
+    const url = new URL(a.href, location.href);
+    if (url.origin !== location.origin) return;
+    if (url.pathname === location.pathname && url.search === location.search) return;
+
+    e.preventDefault();
+    document.body.classList.add('is-leaving');
+    setTimeout(() => { location.href = url.href; }, 190);
+  });
+
+  // 从上一页返回时（bfcache）要把淡出状态摘掉，否则整页是透明的
+  window.addEventListener('pageshow', () => document.body.classList.remove('is-leaving'));
+
+  /* ---------- 滚动进入 ---------- */
+  let io = null;
+
+  function observeReveal(root) {
+    if (!('IntersectionObserver' in window)) {
+      (root || document).querySelectorAll('.reveal').forEach((el) => el.classList.add('is-in'));
+      return;
+    }
+
+    // 兜底：万一观察器没触发，1.6 秒后把视口内的都放出来
+    setTimeout(() => {
+      document.querySelectorAll('.reveal:not(.is-in)').forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.top < window.innerHeight && r.bottom > 0) el.classList.add('is-in');
+      });
+    }, 1600);
+
+    if (!io) {
+      io = new IntersectionObserver((entries) => {
+        entries.forEach((en) => {
+          if (!en.isIntersecting) return;
+          en.target.classList.add('is-in');
+          io.unobserve(en.target);
+        });
+      }, { rootMargin: '0px 0px -6% 0px', threshold: 0.04 });
+    }
+
+    (root || document).querySelectorAll('.reveal:not(.is-in)').forEach((el) => {
+      if (!el.style.getPropertyValue('--i')) {
+        const i = Array.from(el.parentElement.children).indexOf(el);
+        el.style.setProperty('--i', String(Math.min(i, 8)));
+      }
+      io.observe(el);
+    });
+  }
+
+  /* 给刚渲染出来的内容打上 reveal 标记 */
+  function markContent() {
+    document.querySelectorAll('[data-slot]').forEach((slot) => {
+      Array.from(slot.children).forEach((el, i) => {
+        if (el.classList.contains('reveal')) return;
+        el.classList.add('reveal');
+        el.style.setProperty('--i', String(Math.min(i, 8)));
+      });
+    });
+    observeReveal();
+  }
+
+  document.addEventListener('kris:rendered', () => { initPhotos(); markContent(); });
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => observeReveal());
+  } else {
+    observeReveal();
+  }
+
+  // 没有 IntersectionObserver 或脚本报错时，别让内容一直隐身
+  window.addEventListener('error', () => {
+    document.documentElement.classList.remove('js');
+  });
 })();
