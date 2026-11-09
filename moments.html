@@ -13,7 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,300..600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body>
+<body data-page="moments">
 
 <a class="skip" href="#main">跳到正文</a>
 
@@ -39,12 +39,20 @@
   <div class="wrap">
     <div class="page-head">
       <h1 class="page-head__title">照片</h1>
-      <p class="page-head__desc">拍下来的东西。大多没什么意义，但都很具体。</p>
+      <p class="page-head__desc">拍下来的东西。大多没什么意义，但都很具体。点开可以看大图，键盘左右键翻页。</p>
     </div>
-
+    <div class="masonry" data-slot="photos" data-lightbox-set data-masonry></div>
     <p class="empty">还没有照片。</p>
   </div>
 </main>
+
+<div class="lb" data-lb role="dialog" aria-modal="true" aria-label="照片大图" hidden>
+  <button class="lb__btn lb__close" data-lb-close aria-label="关闭">&times;</button>
+  <button class="lb__btn lb__prev" data-lb-prev aria-label="上一张">&#8249;</button>
+  <img class="lb__img" data-lb-img alt="">
+  <button class="lb__btn lb__next" data-lb-next aria-label="下一张">&#8250;</button>
+  <div class="lb__cap" data-lb-cap></div>
+</div>
 
 <footer class="foot">
   <div class="wrap">
@@ -70,5 +78,7 @@
 </footer>
 
 <script src="assets/js/main.js"></script>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/admin.js"></script>
 </body>
 </html>
