@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,300..600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20261109s">
+<link rel="stylesheet" href="assets/css/style.css?v=20261109t">
 </head>
 <body data-page="notes">
 
@@ -23,7 +23,15 @@
     <a class="brand" href="index.html">Kris</a>
     <nav class="nav__links" id="nav-links" aria-label="主导航">
       <a class="nav__link" href="index.html">首页</a>
-      <a class="nav__link" href="writing.html">文章</a>
+      <div class="nav__drop">
+        <a class="nav__link" href="writing.html">文章</a>
+        <div class="nav__sub" role="menu" aria-label="文章类别">
+          <a role="menuitem" href="writing.html?cat=学记">学记</a>
+          <a role="menuitem" href="writing.html?cat=省察">省察</a>
+          <a role="menuitem" href="writing.html?cat=所见">所见</a>
+          <a role="menuitem" href="writing.html?cat=存档">存档</a>
+        </div>
+      </div>
       <a class="nav__link" href="notes.html" aria-current="page">手记</a>
       <a class="nav__link" href="moments.html">照片</a>
       <a class="nav__link" href="timeline.html">时间线</a>
@@ -71,8 +79,8 @@
   </div>
 </footer>
 
-<script src="assets/js/main.js?v=20261109v"></script>
-<script src="assets/js/site.js?v=20261109o"></script>
+<script src="assets/js/main.js?v=20261109w"></script>
+<script src="assets/js/site.js?v=20261109p"></script>
 <script src="assets/js/admin.js?v=20261109q"></script>
 </body>
 </html>

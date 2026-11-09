@@ -124,7 +124,21 @@
 
   /* ---------- 文章列表 ---------- */
   const ARTICLE_CATS = ['学记', '省察', '所见', '存档'];
-  let articlesCat = '';
+
+  function catFromUrl() {
+    const c = new URLSearchParams(location.search).get('cat') || '';
+    return ARTICLE_CATS.includes(c) ? c : '';
+  }
+
+  let articlesCat = catFromUrl();
+
+  function syncCatUrl(cat) {
+    if (document.body.dataset.page !== 'writing') return;
+    const url = new URL(location.href);
+    if (cat) url.searchParams.set('cat', cat);
+    else url.searchParams.delete('cat');
+    history.replaceState(null, '', url.pathname + url.search + url.hash);
+  }
 
   function articleMeta(a) {
     return [].concat(a.category || [], a.tags || []).filter(Boolean);
@@ -192,6 +206,7 @@
     if (!btn) return;
     e.preventDefault();
     articlesCat = btn.getAttribute('data-cat') || '';
+    syncCatUrl(articlesCat);
     renderWriting(window.KRIS_DATA || { articles: [] });
   });
 

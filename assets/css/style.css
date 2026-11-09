@@ -271,6 +271,50 @@ body.is-leaving .foot {
 
 .nav__link[aria-current="page"] { color: var(--ink); }
 
+/* 文章下拉：桌面悬停展开，手机菜单里直接摊开 */
+.nav__drop {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.nav__sub {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 5.5em;
+  padding: 8px 0;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  z-index: 40;
+}
+
+.nav__sub a {
+  display: block;
+  padding: 7px 16px;
+  font-family: var(--font-serif);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  text-align: center;
+  transition: color .18s var(--ease), background-color .18s var(--ease);
+}
+
+.nav__sub a:hover {
+  color: var(--ink);
+  background: rgba(10, 10, 11, 0.03);
+}
+
+@media (min-width: 761px) {
+  .nav__drop:hover .nav__sub,
+  .nav__drop:focus-within .nav__sub {
+    display: block;
+  }
+}
+
 /* 当前页的黑线：跨页面时从左一条滑到新的位置 */
 .nav__line {
   position: absolute;
@@ -1318,14 +1362,46 @@ button.note__tag.is-on {
   .nav--open .nav__links { display: flex; animation: drop-in .22s var(--ease) both; }
   .nav--open { position: relative; }
 
+  .nav__links > .nav__link,
+  .nav__links > .nav__drop {
+    width: 100%;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .nav__links > .nav__link:last-child,
+  .nav__links > .nav__drop:last-of-type {
+    border-bottom: 1px solid var(--line);
+  }
+
   .nav__link {
     width: 100%;
     padding: 13px 0;
     font-size: var(--fs-sm);
-    border-bottom: 1px solid var(--line);
   }
 
-  .nav__link:last-child { border-bottom: 0; }
+  .nav__drop {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nav__sub {
+    display: flex;
+    flex-direction: column;
+    position: static;
+    transform: none;
+    min-width: 0;
+    margin: -4px 0 8px;
+    padding: 0 0 4px 14px;
+    border: 0;
+    background: transparent;
+  }
+
+  .nav__sub a {
+    padding: 8px 0;
+    text-align: left;
+    font-size: var(--fs-xs);
+  }
+
   .nav__line { display: none; }
   .nav__toggle { display: inline-flex; }
 

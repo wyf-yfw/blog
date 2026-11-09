@@ -26,7 +26,7 @@
     });
 
     nav.addEventListener('click', (e) => {
-      if (e.target.closest('.nav__link')) closeNav();
+      if (e.target.closest('.nav__link, .nav__sub a')) closeNav();
     });
 
     document.addEventListener('keydown', (e) => {
