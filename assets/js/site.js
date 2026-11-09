@@ -174,16 +174,23 @@
     const sub = head.querySelector('[data-writing-sub]');
     const desc = head.querySelector('[data-writing-desc]');
     const meta = ARTICLE_HEAD[articlesCat] || ARTICLE_HEAD[''];
-    document.title = meta.title;
-    if (desc) desc.textContent = meta.desc;
-    if (!sub) return;
-    if (articlesCat) {
-      sub.textContent = articlesCat;
-      sub.hidden = false;
-    } else {
-      sub.textContent = '';
-      sub.hidden = true;
+    const nextDesc = meta.desc;
+    const nextSub = articlesCat || '';
+    // 内容没变就别写 DOM，避免分类落地后再闪一次
+    if (document.title !== meta.title) document.title = meta.title;
+    if (desc && desc.textContent !== nextDesc) desc.textContent = nextDesc;
+    if (sub) {
+      if (nextSub) {
+        if (sub.textContent !== nextSub) sub.textContent = nextSub;
+        if (sub.hidden) sub.hidden = false;
+      } else if (!sub.hidden || sub.textContent) {
+        sub.textContent = '';
+        sub.hidden = true;
+      }
     }
+    document.documentElement.classList.add('writing-head-ready');
+    if (articlesCat) document.documentElement.dataset.writingCat = articlesCat;
+    else delete document.documentElement.dataset.writingCat;
   }
 
   function renderArticleFilters(all) {
