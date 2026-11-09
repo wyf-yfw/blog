@@ -97,6 +97,7 @@
     root = document.createElement('div');
     root.className = 'adm';
     root.innerHTML = `
+      <div class="adm__panel" hidden></div>
       <div class="adm__bar">
         <span class="adm__tag">编辑模式</span>
         <button type="button" data-act="article">文章</button>
@@ -105,8 +106,7 @@
         <button type="button" data-act="about">关于</button>
         <button type="button" data-act="backup">备份</button>
         <button type="button" data-act="exit" class="adm__exit">退出</button>
-      </div>
-      <div class="adm__panel" hidden></div>`;
+      </div>`;
     document.body.appendChild(root);
     bar = root.querySelector('.adm__bar');
     panel = root.querySelector('.adm__panel');

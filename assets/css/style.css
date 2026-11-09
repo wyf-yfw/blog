@@ -981,6 +981,9 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   left: 0; right: 0; bottom: 0;
   z-index: 120;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .adm__bar,
@@ -1027,7 +1030,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 
 .adm__panel {
   max-width: 560px;
-  margin: 0 auto 12px;
+  margin: 0 auto;
   max-height: 70vh;
   overflow: auto;
   background: var(--paper);
@@ -1154,8 +1157,8 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .adm__toast {
   position: fixed;
   left: 50%;
-  bottom: 76px;
-  transform: translate(-50%, 10px);
+  top: 20px;
+  transform: translate(-50%, -10px);
   background: var(--ink);
   color: var(--paper);
   font-family: var(--font-mono);
