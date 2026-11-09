@@ -116,6 +116,8 @@ site/
 
 首页顶部每次刷新随机显示一句，取自 `assets/js/quotes.js`。
 
+首屏占满一屏（`min-height: calc(100svh - var(--nav-h))`），下面三个区块要往下滑才看得到。
+
 - 结构：`{ text: 原文, author, source, lang?, zh? }`
 - `lang` 是原文语言（`de`/`fr`/`en`/`da`），`zh` 是中文译文——**有 `zh` 才会出现「译」按钮**
 - 纯中文的句子不要写 `lang` 和 `zh`，只显示原文

@@ -34,6 +34,7 @@
   --fs-mono:    0.75rem;
 
   /* 尺寸 */
+  --nav-h: 78px;
   --wrap: 1120px;
   --text: 36em;
   --pad: clamp(20px, 5vw, 48px);
@@ -149,7 +150,7 @@ body.is-leaving .foot {
   align-items: center;
   justify-content: space-between;
   gap: 32px;
-  min-height: 78px;
+  min-height: var(--nav-h);
 }
 
 .brand {
@@ -160,6 +161,7 @@ body.is-leaving .foot {
 }
 
 .nav__links {
+  position: relative;      /* 黑线的定位祖先，否则 bottom:0 会落到视口底部 */
   display: flex;
   align-items: center;
   gap: 30px;
@@ -221,8 +223,14 @@ body.is-leaving .foot {
 
 /* ---------- 5. Hero：首屏一句话 ---------- */
 .hero {
-  padding-top: clamp(72px, 13vw, 148px);
-  padding-bottom: clamp(36px, 6vw, 64px);
+  /* 占满一屏（扣掉导航），正文全部要往下滑才看得到 */
+  min-height: calc(100vh - var(--nav-h));
+  min-height: calc(100svh - var(--nav-h));
+  display: flex;
+  align-items: center;
+  /* 上下不对称，让句子落在视觉中心偏上一点 */
+  padding-top: clamp(32px, 5vh, 64px);
+  padding-bottom: clamp(88px, 15vh, 176px);
 }
 
 .q {
@@ -1078,7 +1086,7 @@ body.is-leaving .foot {
     display: none;
     position: absolute;
     left: 0; right: 0;
-    top: 78px;
+    top: var(--nav-h);
     z-index: 50;
     flex-direction: column;
     align-items: flex-start;
