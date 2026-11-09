@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kris — 文章</title>
+    <link>https://example.com/</link>
+    <description>文章、手记和照片，从 2021 年记到现在。</description>
+    <language>zh-CN</language>
+    <lastBuildDate>Sat, 24 Oct 2026 10:00:00 +0800</lastBuildDate>
+    <atom:link href="https://example.com/feed.xml" rel="self" type="application/rss+xml"/>
+
+    <item>
+      <title>在东京住了一个月，我把每天的天气记了下来</title>
+      <link>https://example.com/post.html</link>
+      <guid>https://example.com/post.html</guid>
+      <pubDate>Sat, 24 Oct 2026 10:00:00 +0800</pubDate>
+      <category>生活</category>
+      <description>本来只想留个记录。记满一个月，每条天气都能对上一个具体的下午。</description>
+    </item>
+
+    <item>
+      <title>我用三个月学 Rust，然后在一个地方卡了整整两周</title>
+      <link>https://example.com/post.html</link>
+      <guid>https://example.com/post-rust.html</guid>
+      <pubDate>Sat, 12 Sep 2026 10:00:00 +0800</pubDate>
+      <category>学习</category>
+      <description>起初我以为是所有权和生命周期，后来发现卡住我的是可变性——一个我以为自己早就懂了的词。</description>
+    </item>
+
+    <item>
+      <title>把相机换成 35mm 定焦之后，我反而拍得更少了</title>
+      <link>https://example.com/post.html</link>
+      <guid>https://example.com/post-35mm.html</guid>
+      <pubDate>Sun, 30 Aug 2026 10:00:00 +0800</pubDate>
+      <category>摄影</category>
+      <description>少一个变量，注意力就回来了。文里放了我最喜欢的三张，还有删掉另外两百张的理由。</description>
+    </item>
+  </channel>
+</rss>
