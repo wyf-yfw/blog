@@ -7,9 +7,10 @@
 (function () {
   'use strict';
 
-  /* ---------- 手机菜单 ---------- */
+  /* ---------- 手机菜单 + 文章下拉 ---------- */
   const nav = document.querySelector('[data-nav]');
   const navToggle = document.querySelector('[data-nav-toggle]');
+  const desktopNav = () => window.matchMedia('(min-width: 761px)').matches;
 
   function closeNav() {
     if (!nav || !navToggle) return;
@@ -18,19 +19,64 @@
     navToggle.setAttribute('aria-label', '打开菜单');
   }
 
+  function closeDrops(except) {
+    document.querySelectorAll('.nav__drop.is-open').forEach((drop) => {
+      if (except && drop === except) return;
+      drop.classList.remove('is-open');
+      const link = drop.querySelector(':scope > .nav__link');
+      if (link) link.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  document.querySelectorAll('.nav__drop > .nav__link').forEach((link) => {
+    link.setAttribute('aria-expanded', 'false');
+    link.setAttribute('aria-haspopup', 'true');
+  });
+
+  if (nav) {
+    nav.addEventListener('click', (e) => {
+      const dropLink = e.target.closest('.nav__drop > .nav__link');
+      if (dropLink && desktopNav()) {
+        e.preventDefault();
+        const drop = dropLink.closest('.nav__drop');
+        const willOpen = !drop.classList.contains('is-open');
+        closeDrops();
+        if (willOpen) {
+          drop.classList.add('is-open');
+          dropLink.setAttribute('aria-expanded', 'true');
+        }
+        return;
+      }
+
+      if (e.target.closest('.nav__sub a')) {
+        closeDrops();
+        closeNav();
+        return;
+      }
+
+      if (e.target.closest('.nav__link')) closeNav();
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.nav__drop')) closeDrops();
+  });
+
   if (nav && navToggle) {
     navToggle.addEventListener('click', () => {
       const open = nav.classList.toggle('nav--open');
       navToggle.setAttribute('aria-expanded', String(open));
       navToggle.setAttribute('aria-label', open ? '关闭菜单' : '打开菜单');
-    });
-
-    nav.addEventListener('click', (e) => {
-      if (e.target.closest('.nav__link, .nav__sub a')) closeNav();
+      if (!open) closeDrops();
     });
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && nav.classList.contains('nav--open')) {
+      if (e.key !== 'Escape') return;
+      if (document.querySelector('.nav__drop.is-open')) {
+        closeDrops();
+        return;
+      }
+      if (nav.classList.contains('nav--open')) {
         closeNav();
         navToggle.focus();
       }

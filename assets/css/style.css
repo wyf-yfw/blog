@@ -271,7 +271,7 @@ body.is-leaving .foot {
 
 .nav__link[aria-current="page"] { color: var(--ink); }
 
-/* 文章下拉：桌面悬停展开，手机菜单里直接摊开 */
+/* 文章下拉：桌面点击常驻，手机菜单里直接摊开 */
 .nav__drop {
   position: relative;
   display: flex;
@@ -309,8 +309,7 @@ body.is-leaving .foot {
 }
 
 @media (min-width: 761px) {
-  .nav__drop:hover .nav__sub,
-  .nav__drop:focus-within .nav__sub {
+  .nav__drop.is-open .nav__sub {
     display: block;
   }
 }
