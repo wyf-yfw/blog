@@ -34,10 +34,12 @@
 
   async function gh(path, opts) {
     const res = await fetch(API + path, {
+      cache: 'no-store',
       ...opts,
       headers: {
         Authorization: 'Bearer ' + ensureToken(),
         Accept: 'application/vnd.github+json',
+        'Cache-Control': 'no-cache',
         ...(opts && opts.headers)
       }
     });
@@ -59,24 +61,48 @@
     return btoa(bin);
   }
 
+  // 记住每个文件上次写成功后的 sha；再写时用它，避免浏览器把旧的 GET 结果缓存回来
+  const shaCache = Object.create(null);
+
+  async function currentSha(path) {
+    if (shaCache[path]) return shaCache[path];
+    try {
+      const cur = await gh(`/repos/${REPO}/contents/${path}?ref=${BRANCH}`);
+      return cur.sha;
+    } catch (e) {
+      if (e.status === 404) return '';
+      throw e;
+    }
+  }
+
   async function commitFile(path, content, message, isBase64) {
     const url = `/repos/${REPO}/contents/${path}`;
-    let sha;
+    const body = { message, branch: BRANCH, content: isBase64 ? content : b64(content) };
+
+    const put = async (sha) => {
+      if (sha) body.sha = sha;
+      else delete body.sha;
+      return gh(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    };
+
+    let sha = await currentSha(path);
+    let result;
     try {
-      const cur = await gh(url + '?ref=' + BRANCH);
-      sha = cur.sha;
+      result = await put(sha);
     } catch (e) {
-      if (e.status !== 404) throw e;
+      // 对不上就丢掉缓存，重新问一次当前 sha 再写
+      if (e.status !== 409 && !(e.message || '').includes('does not match')) throw e;
+      delete shaCache[path];
+      sha = await currentSha(path);
+      result = await put(sha);
     }
 
-    const body = { message, branch: BRANCH, content: isBase64 ? content : b64(content) };
-    if (sha) body.sha = sha;
-
-    return gh(url, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
+    if (result && result.content && result.content.sha) shaCache[path] = result.content.sha;
+    return result;
   }
 
   async function saveJson(message) {
