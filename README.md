@@ -61,11 +61,20 @@ site/
 
 ## 联系方式
 
-- 邮箱 krisyfwang@gmail.com
-- GitHub [@wyf-yfw](https://github.com/wyf-yfw)
-- X [@wyfyfw1](https://x.com/wyfyfw1)
+| 平台 | 账号 | 链接 |
+|---|---|---|
+| 邮箱 | krisyfwang@gmail.com | mailto |
+| GitHub | @wyf-yfw | https://github.com/wyf-yfw |
+| X | @wyfyfw1 | https://x.com/wyfyfw1 |
+| Instagram | @wg_peach666 | https://www.instagram.com/wg_peach666/ |
+| 抖音 | w806137714 | https://www.douyin.com/search/w806137714 |
+| 哔哩哔哩 | 650800563 | https://space.bilibili.com/650800563 |
+| 小红书 | 5332018867 | https://www.xiaohongshu.com/user/profile/5332018867 |
 
-改的时候搜 `krisyfwang`、`wyf-yfw`、`wyfyfw1` 就能找到全部位置。
+抖音没有「抖音号」直达主页的公开地址，链接用的是搜索页，进去第一个结果就是你。
+
+改的时候搜 `krisyfwang`、`wyf-yfw`、`wyfyfw1`、`wg_peach666`、`w806137714`、`650800563`、`5332018867`
+就能在每个页面的页脚、首页首屏和关于页找到全部位置。
 
 ## 直接改文件（备选）
 
