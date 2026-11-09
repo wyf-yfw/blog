@@ -131,6 +131,17 @@ body.is-leaving .foot {
   animation-delay: calc(var(--i, 0) * 45ms);
 }
 
+/* 页头标题区不做淡入，避免分类切换/回填时闪烁 */
+.page-head,
+.page-head.reveal,
+.page-head .reveal,
+.js .page-head,
+.js .page-head.reveal,
+.js .page-head .reveal {
+  opacity: 1;
+  animation: none;
+}
+
 /* ---------- 2.6 鼠标光标 ---------- */
 /* 只有 JS 确认是精确指针设备（鼠标）时才接管，触屏和脚本失效都不受影响。
    链接的浏览器默认样式、按钮和照片上的 cursor:pointer 会盖过父级继承来的 none，

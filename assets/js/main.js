@@ -509,9 +509,10 @@
     });
   }
 
-  /* 给刚渲染出来的内容打上 reveal 标记 */
+  /* 给刚渲染出来的内容打上 reveal 标记（页头/筛选条不动画） */
   function markContent() {
     document.querySelectorAll('[data-slot]').forEach((slot) => {
+      if (slot.classList.contains('page-head') || slot.matches('.ntags, .page-head')) return;
       Array.from(slot.children).forEach((el, i) => {
         if (el.classList.contains('reveal')) return;
         el.classList.add('reveal');
