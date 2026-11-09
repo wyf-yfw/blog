@@ -7,16 +7,14 @@
     ]
   },
   "articles": [],
-  "notes": [
-    {
-      "id": "mw90nd8ny58i",
-      "date": "2026-11-09",
-      "text": "今天是我的博客创建的第一天！",
-      "tags": [
-        "开始"
-      ]
-    }
-  ],
+  "notes": [],
   "photos": [],
-  "timeline": []
+  "timeline": [
+    {
+      "id": "mw90tpmfzujf",
+      "date": "2026-11-09 16:50",
+      "text": "删除了手记：今天是我的博客创建的第一天！",
+      "kind": "note"
+    }
+  ]
 }
