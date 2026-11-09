@@ -52,6 +52,8 @@
 
 html {
   font-size: 16px;
+  /* 常驻滚动条槽位：短页面和长页面版心一致，切页时导航不会左右跳 */
+  scrollbar-gutter: stable;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-size-adjust: 100%;
