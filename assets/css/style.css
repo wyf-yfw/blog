@@ -609,14 +609,17 @@ button.note__tag.is-on {
 .ntags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
-  margin: 4px 0 28px;
+  align-items: baseline;
+  gap: 8px 16px;
+  margin: 0 0 28px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
 }
 
 .ntag {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
   color: var(--muted);
   background: none;
   border: 0;
@@ -625,11 +628,15 @@ button.note__tag.is-on {
   transition: color .18s var(--ease);
 }
 
-.ntag:hover,
+.ntag:hover {
+  color: var(--body);
+}
+
 .ntag.is-on {
-  color: var(--ink);
+  color: var(--body);
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
 }
 
 .notes__none {
@@ -662,6 +669,7 @@ button.note__tag.is-on {
 /* ---------- 10. 页头 ---------- */
 .page-head {
   padding: clamp(56px, 8vw, 88px) 0 0;
+  margin-bottom: clamp(28px, 4vw, 40px);
   max-width: var(--text);
 }
 
@@ -682,11 +690,14 @@ button.note__tag.is-on {
 }
 
 .page-head__desc {
-  margin-top: 18px;
+  margin: 12px 0 0;
+  font-family: var(--font-serif);
   font-size: var(--fs-sm);
+  font-weight: 400;
   color: var(--muted);
-  line-height: 1.85;
-  max-width: 32em;
+  line-height: 1.7;
+  letter-spacing: 0.08em;
+  max-width: 28em;
 }
 
 /* ---------- 10.5 时间线（像一条向下的 git 分支） ---------- */
