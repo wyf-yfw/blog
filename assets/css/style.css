@@ -649,8 +649,8 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   margin-top: 20px;
   border-top: 1px solid var(--line);
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: clamp(32px, 6vw, 72px);
+  grid-template-columns: 1fr;
+  max-width: 34em;
 }
 
 .contact a {
@@ -889,6 +889,14 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   font-size: 0.6875rem;
   color: var(--muted);
   letter-spacing: 0.04em;
+}
+
+/* ---------- 18.5 空状态 ---------- */
+.empty {
+  padding: 32px 0 8px;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-sm);
+  color: var(--muted);
 }
 
 /* ---------- 19. 小工具 ---------- */

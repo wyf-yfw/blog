@@ -1,7 +1,8 @@
 # Kris — 个人博客
 
-纯静态的个人站点：写字、记手记、放照片、留联系方式。
-纸白底、墨黑字，衬线正文配等宽元信息，只有发丝线，没有阴影和动画。
+纯静态的个人站点。纸白底、墨黑字，衬线正文配等宽元信息，只有发丝线，没有阴影和动画。
+
+线上地址：**https://kriswang.me**
 
 ## 怎么看
 
@@ -19,29 +20,34 @@ python3 -m http.server 8080
 
 ```
 site/
-├── index.html        首页（首屏 + 最近文章 + 手记 + 照片带）
-├── writing.html      文章（按年份归档，可筛选）
-├── post.html         单篇文章示例（正文排版示范）
-├── notes.html        手记（短条目，可筛选）
-├── moments.html      照片（三列瀑布流 + 灯箱）
-├── about.html        关于（自我介绍 + 时间线 + 此刻 + 联系方式）
-├── feed.xml          RSS
+├── index.html        首页（首屏 + 文章 / 手记 / 照片三个区块）
+├── writing.html      文章列表
+├── notes.html        手记
+├── moments.html      照片墙
+├── about.html        关于 + 联系方式
+├── CNAME             自定义域名（GitHub Pages 用）
 └── assets/
     ├── css/style.css 所有样式，改颜色改字体都在开头 :root 里
     ├── js/main.js    交互：手机菜单、标签筛选、照片灯箱
     └── img/
-        ├── avatar.svg        头像（占位，换成你的照片）
-        └── photos/*.jpg      照片（示例图，全部替换成你自己的）
+        └── avatar.svg  头像 / favicon
 ```
+
+现在四个内容区都是空的，页面里留了 `<p class="empty">还没有文章。</p>` 这样的占位行，往里加内容时把那行删掉、换成真实条目即可。
+
+## 联系方式
+
+- 邮箱 krisyfwang@gmail.com
+- GitHub [@wyf-yfw](https://github.com/wyf-yfw)
+- X [@wyfyfw1](https://x.com/wyfyfw1)
+
+改的时候搜 `krisyfwang`、`wyf-yfw`、`wyfyfw1` 就能找到全部位置。
 
 ## 换成你自己的内容
 
-**改名字**：全局搜索 `Kris`，替换成你的名字。涉及标题、导航、页脚、`about.html` 正文。
+**改名字**：全局搜索 `Kris`，替换成你的名字。涉及标题、导航、页脚。
 
 **换头像**：把 `assets/img/avatar.svg` 换成你的照片，或者直接改各页面 `<link rel="icon">` 指向新文件。
-
-**换照片**：把 `assets/img/photos/` 里的图换成自己的，文件名保持一致就不用改 HTML；
-想改文件名，记得同步改 `moments.html` 里 `figure` 的 `data-src` 和 `img src` 两处。
 
 **改配色**：打开 `assets/css/style.css`，最上面的 `:root` 就是全部颜色变量。
 `--paper` 是纸色，`--ink` 是标题色，`--body` 是正文色，`--muted` 是日期、说明这类次要信息。
@@ -50,20 +56,74 @@ site/
 中文默认走系统字体（Mac 的苹方/宋体、Windows 的微软雅黑/思源），
 英文走 Google Fonts 的 Source Serif 4 / Inter / IBM Plex Mono。断网时会自动回退，不会崩。
 
-**加一篇文章**：复制 `post.html`，改标题、日期、正文即可。
-`writing.html` 里照着现有 `<a class="row">` 复制一条，改日期和标题。
-筛选用的是 `data-tag`，可选值：`life` `study` `photo` `tech`。
+## 加内容
 
-**加一条手记**：在 `notes.html` 的 `.notes` 里复制一个 `<article class="note">`，
+**加一篇文章**：在 `writing.html` 的 `.year` 区块里加一条
+
+```html
+<a class="row" href="post-xxx.html" data-tag="life">
+  <span class="row__date">11·09</span>
+  <span class="row__title">标题</span>
+  <span class="row__tags">生活</span>
+</a>
+```
+
+再新建一个 `post-xxx.html` 当正文页，结构参考下面的「文章页骨架」。
+首页 `index.html` 的「最近写的」区块里也照 `.entry` 加一条。
+`data-tag` 可选值：`life` `study` `photo` `tech`。
+
+**加一条手记**：在 `notes.html` 的 `.notes` 里加
+
+```html
+<article class="note" data-tag="think">
+  <div class="note__date">2026.11.09</div>
+  <p class="note__text">正文。</p>
+</article>
+```
+
 `data-tag` 可选值：`read` `tech` `life` `think`。
 
-**加一张照片**：在 `moments.html` 的 `.masonry` 里复制一个 `<figure>`，
-`data-src` 和 `img src` 都指向同一张图，`data-cap` 和 `figcaption` 写同一句说明。
+**加一张照片**：把图片放进 `assets/img/photos/`，在 `moments.html` 里加
+
+```html
+<figure data-src="assets/img/photos/xxx.jpg" data-cap="说明">
+  <img src="assets/img/photos/xxx.jpg" alt="说明" width="1200" height="1500" loading="lazy">
+  <figcaption>说明</figcaption>
+</figure>
+```
+
+照片墙需要外层容器带 `data-masonry` 和 `data-lightbox-set`，灯箱才会生效；
+没有 JS 时会退化成三栏 CSS columns。
+
+### 文章页骨架
+
+```html
+<main id="main">
+  <article>
+    <div class="wrap">
+      <header class="article__head">
+        <div class="article__meta"><span>2026.11.09</span><span>8 分钟读完</span><span>生活</span></div>
+        <h1 class="article__title">标题</h1>
+        <p class="article__lede">副标题。</p>
+      </header>
+      <div class="prose">
+        <p>正文段落。</p>
+        <h2>小标题</h2>
+        <blockquote><p>引用。</p></blockquote>
+      </div>
+      <footer class="article__foot">
+        <div class="article__tags">生活</div>
+        <a class="sec__more" href="writing.html">← 回到文章列表</a>
+      </footer>
+    </div>
+  </article>
+</main>
+```
 
 ## 交互
 
 - 窄屏时导航收进右上角按钮，点开是纵向菜单，`Esc` 关闭。
-- 文字页和手记页的标签可以筛选，筛完没有条目的年份会自动收起。
+- 带 `data-filter` 的筛选栏可以按 `data-tag` 过滤，没有匹配的年份分组会自动收起（现在页面里没放筛选栏，需要时加上即可）。
 - 照片墙点开是大图，支持 `←` `→` 翻页、`Esc` 关闭。
 - 系统开了「减少动态效果」时，过渡动画会关掉。
 
@@ -83,8 +143,3 @@ site/
 
 - **Cloudflare Pages / Vercel**：新建项目，构建命令留空，输出目录填 `.`，再把域名 DNS 迁过去。
 - **自己的服务器**：把 `site/` 里的内容拷到 nginx 的静态目录即可。
-
-## 还没做的
-
-- 文章列表目前是手写的，量大了建议换成 Astro / 11ty 之类从 Markdown 生成。
-- 没有搜索、没有评论、没有访问统计——需要的话可以后加。
