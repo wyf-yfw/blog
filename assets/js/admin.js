@@ -382,6 +382,35 @@
     ta.setSelectionRange(caret, caret);
   }
 
+  // 大截图先压到最长边 1600，避免 GitHub 写入失败 / 页面还没部署完就裂图
+  async function prepareImage(file) {
+    if (file.size > 20 * 1024 * 1024) throw new Error('图片超过 20MB，太大了');
+    let bitmap;
+    try {
+      bitmap = await createImageBitmap(file);
+    } catch (e) {
+      throw new Error('读不了这张图（试试先另存为 PNG / JPG）');
+    }
+    const maxEdge = 1600;
+    const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+    const w = Math.max(1, Math.round(bitmap.width * scale));
+    const h = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+    bitmap.close();
+
+    const asPng = /png$/i.test(file.type) || /\.png$/i.test(file.name);
+    const blob = await new Promise((resolve) => {
+      canvas.toBlob(resolve, asPng ? 'image/png' : 'image/jpeg', 0.86);
+    });
+    if (!blob) throw new Error('压缩图片失败');
+    if (blob.size > 8 * 1024 * 1024) throw new Error('压缩后仍超过 8MB，请换一张小一点的');
+    const ext = asPng ? 'png' : 'jpg';
+    return { blob, ext, base64: await base64Of(blob) };
+  }
+
   function wireImageInsert(form, fieldName) {
     const ta = form.querySelector(`[name="${fieldName}"]`);
     const btn = form.querySelector('[data-insert-img]');
@@ -393,21 +422,20 @@
       const file = fileInput.files && fileInput.files[0];
       fileInput.value = '';
       if (!file) return;
-      if (file.size > 5 * 1024 * 1024) {
-        toast('图片超过 5MB，请压缩后再试', 'err');
-        return;
-      }
       const prev = btn.textContent;
       btn.disabled = true;
-      btn.textContent = '上传中…';
+      btn.textContent = '处理中…';
       try {
         const id = uid();
-        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-        const src = `assets/img/uploads/${id}.${ext}`;
+        const prepared = await prepareImage(file);
+        btn.textContent = '上传中…';
+        // 用站根路径 + ?v=，避免相对路径和部署前 404 被浏览器缓存成裂图
+        const path = `assets/img/uploads/${id}.${prepared.ext}`;
+        const src = `/${path}?v=${id}`;
         const alt = (file.name.replace(/\.[^.]+$/, '') || '图片').slice(0, 40);
-        await commitFile(src, await base64Of(file), '插图：' + (alt || file.name), true);
+        await commitFile(path, prepared.base64, '插图：' + (alt || file.name), true);
         insertAtCursor(ta, `![${alt}](${src})`);
-        toast('图片已插入正文');
+        toast('图片已插入。保存后等约 1 分钟刷新即可看到');
       } catch (err) {
         toast('失败：' + err.message, 'err');
       } finally {
@@ -486,10 +514,10 @@
         const file = form.file.files[0];
         if (!file) throw new Error('先选一张图');
         const id = uid();
-        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-        const src = `assets/img/uploads/${id}.${ext}`;
-        const dims = await imageSize(file);
-        await commitFile(src, await base64Of(file), '图片：' + (form.caption.value || file.name), true);
+        const prepared = await prepareImage(file);
+        const src = `assets/img/uploads/${id}.${prepared.ext}`;
+        const dims = await imageSize(prepared.blob);
+        await commitFile(src, prepared.base64, '图片：' + (form.caption.value || file.name), true);
         const caption = form.caption.value.trim();
         data().photos.push({
           id, src, caption,

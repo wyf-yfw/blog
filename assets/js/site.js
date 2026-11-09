@@ -24,10 +24,11 @@
     .replace(/"/g, '&quot;');
 
   /* 极简标记：## 小标题、> 引用、- 列表、**粗体**、`代码`、![说明](图片地址) */
-  const safeSrc = (s) => /^(assets\/|https?:\/\/)/i.test(s || '');
+  // 允许 assets/...、/assets/...，以及带 ?v= 防缓存参数
+  const safeSrc = (s) => /^(?:\/)?assets\/|https?:\/\//i.test(s || '');
 
   const inline = (t) => esc(t)
-    .replace(/!\[([^\]]*)\]\((assets\/[^)\s]+|https?:\/\/[^)\s]+)\)/gi,
+    .replace(/!\[([^\]]*)\]\(((?:\/)?assets\/[^)\s]+|https?:\/\/[^)\s]+)\)/gi,
       '<img class="prose__inline-img" src="$2" alt="$1" loading="lazy">')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/`([^`]+)`/g, '<code>$1</code>');
