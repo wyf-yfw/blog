@@ -531,6 +531,12 @@
     document.dispatchEvent(new CustomEvent('kris:rendered', { detail: data }));
   }
 
+  function dataFingerprint(data) {
+    try { return JSON.stringify(data); } catch (e) { return ''; }
+  }
+
+  let lastFingerprint = '';
+
   async function start() {
     let data = { about: { paragraphs: [] }, articles: [], notes: [], photos: [], timeline: [] };
     try {
@@ -540,10 +546,35 @@
       /* file:// 或离线时保持空数据 */
     }
     if (!Array.isArray(data.timeline)) data.timeline = [];
+    lastFingerprint = dataFingerprint(data);
     apply(data);
   }
 
-  window.KRIS_RERENDER = () => apply(window.KRIS_DATA || { about: { paragraphs: [] }, articles: [], notes: [], photos: [], timeline: [] });
+  /* 后台内容有更新时，静默重拉 site.json，免手动刷新 */
+  async function softRefreshContent() {
+    if (document.hidden) return;
+    try {
+      const res = await fetch(API.dataUrl(), { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!Array.isArray(data.timeline)) data.timeline = [];
+      const next = dataFingerprint(data);
+      if (!next || next === lastFingerprint) return;
+      lastFingerprint = next;
+      apply(data);
+    } catch (e) { /* 忽略瞬时网络错误 */ }
+  }
+
+  setInterval(softRefreshContent, 45000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) softRefreshContent();
+  });
+
+  window.KRIS_RERENDER = () => {
+    const data = window.KRIS_DATA || { about: { paragraphs: [] }, articles: [], notes: [], photos: [], timeline: [] };
+    lastFingerprint = dataFingerprint(data);
+    apply(data);
+  };
   window.KRIS_RENDER = start;
   window.KRIS_BODY = renderBody;
 
