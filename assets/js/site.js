@@ -136,6 +136,24 @@
     setList('[data-slot="about"]', ps.map((t) => '<p>' + inline(t) + '</p>').join(''));
   }
 
+  /* ---------- 时间线：最新在最上 ---------- */
+  function fmtWhen(s) {
+    const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+    if (!m) return esc(s || '');
+    return m[4] ? `${m[1]}.${m[2]}.${m[3]} ${m[4]}:${m[5]}` : `${m[1]}.${m[2]}.${m[3]}`;
+  }
+
+  function renderTimeline(data) {
+    const items = (data.timeline || []).slice();
+    setList('[data-slot="timeline"]', items.map((it, i) => `
+      <li class="tl__item" data-kind="${esc(it.kind || '')}">
+        <span class="tl__dot" aria-hidden="true"></span>
+        ${i < items.length - 1 ? '<span class="tl__rail" aria-hidden="true"></span>' : ''}
+        <time class="tl__when" datetime="${esc(it.date || '')}">${fmtWhen(it.date)}</time>
+        <p class="tl__text">${esc(it.text || '')}</p>
+      </li>`).join(''));
+  }
+
   /* ---------- 文章页 ---------- */
   function renderPost(data) {
     const id = new URLSearchParams(location.search).get('p');
@@ -275,7 +293,8 @@
       notes: renderNotes,
       about: renderAbout,
       post: renderPost,
-      moments: renderMoments
+      moments: renderMoments,
+      timeline: renderTimeline
     };
 
     // 列表页保存后，新增的条目在这一页看不到，提示去对应页面
@@ -286,17 +305,18 @@
   }
 
   async function start() {
-    let data = { about: { paragraphs: [] }, articles: [], notes: [], photos: [] };
+    let data = { about: { paragraphs: [] }, articles: [], notes: [], photos: [], timeline: [] };
     try {
       const res = await fetch(API.dataUrl(), { cache: 'no-store' });
       if (res.ok) data = await res.json();
     } catch (e) {
       /* file:// 或离线时保持空数据 */
     }
+    if (!Array.isArray(data.timeline)) data.timeline = [];
     apply(data);
   }
 
-  window.KRIS_RERENDER = () => apply(window.KRIS_DATA || { about: { paragraphs: [] }, articles: [], notes: [], photos: [] });
+  window.KRIS_RERENDER = () => apply(window.KRIS_DATA || { about: { paragraphs: [] }, articles: [], notes: [], photos: [], timeline: [] });
   window.KRIS_RENDER = start;
   window.KRIS_BODY = renderBody;
 

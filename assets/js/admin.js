@@ -17,8 +17,27 @@
   const token = () => localStorage.getItem(TOKEN_KEY) || '';
   const today = () => new Date().toLocaleDateString('sv-SE');
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const nowStamp = () => {
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  };
 
-  const data = () => window.KRIS_DATA || (window.KRIS_DATA = { about: { paragraphs: [] }, articles: [], notes: [], photos: [] });
+  const data = () => window.KRIS_DATA || (window.KRIS_DATA = { about: { paragraphs: [] }, articles: [], notes: [], photos: [], timeline: [] });
+
+  // 保存内容时往时间线最前面插一条；同文案连着点只刷新时间
+  function pushTimeline(kind, text) {
+    const d = data();
+    if (!Array.isArray(d.timeline)) d.timeline = [];
+    const head = d.timeline[0];
+    const stamp = nowStamp();
+    if (head && head.kind === kind && head.text === text) {
+      head.date = stamp;
+      return;
+    }
+    d.timeline.unshift({ id: uid(), date: stamp, text: text, kind: kind });
+    if (d.timeline.length > 200) d.timeline.length = 200;
+  }
 
   /* ---------- GitHub ---------- */
   // 发布还是走 GitHub API，令牌只在第一次保存时问一次，之后留在本机
@@ -286,6 +305,8 @@
 
     data()[key] = data()[key].filter((x) => x.id !== id);
     try {
+      const noun = kind === 'article' ? '文章' : kind === 'note' ? '手记' : '照片';
+      pushTimeline(kind, '删除了' + noun + '：' + label.slice(0, 40));
       await saveJson('删除：' + label.slice(0, 40));
       toast('已删除');
       window.KRIS_RERENDER();
@@ -304,6 +325,7 @@
 
     try {
       if (kind === 'article') {
+        const editing = !!form.dataset.editing;
         const id = form.dataset.editing || uid();
         const item = {
           id,
@@ -317,6 +339,7 @@
         const list = data().articles;
         const i = list.findIndex((a) => a.id === id);
         if (i >= 0) list[i] = item; else list.push(item);
+        pushTimeline('article', (editing ? '更新了文章：' : '发布了文章：') + item.title);
         await saveJson('文章：' + item.title);
         toast('已保存，约 1 分钟后线上可见');
       }
@@ -329,6 +352,7 @@
           tags: splitTags(form.tags.value)
         };
         data().notes.push(item);
+        pushTimeline('note', '记了一笔手记：' + item.text.slice(0, 40));
         await saveJson('手记：' + item.text.slice(0, 30));
         toast('已保存，约 1 分钟后线上可见');
       }
@@ -343,21 +367,24 @@
         const dims = await imageSize(file);
 
         await commitFile(src, await base64Of(file), '图片：' + (form.caption.value || file.name), true);
+        const caption = form.caption.value.trim();
         data().photos.push({
           id,
           src,
-          caption: form.caption.value.trim(),
+          caption: caption,
           date: form.date.value || today(),
           width: dims.w,
           height: dims.h
         });
-        await saveJson('照片：' + (form.caption.value || file.name));
+        pushTimeline('photo', '上传了照片：' + (caption || file.name).slice(0, 40));
+        await saveJson('照片：' + (caption || file.name));
         toast('已上传，约 1 分钟后可见');
       }
 
       if (kind === 'about') {
         const text = form.paragraphs.value.trim();
         data().about = { paragraphs: text ? text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean) : [] };
+        pushTimeline('about', '更新了关于');
         await saveJson('关于：更新自我介绍');
         toast('已保存，约 1 分钟后生效');
       }
