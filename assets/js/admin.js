@@ -192,15 +192,15 @@
       <div class="adm__imgrow">
         <button type="button" class="adm__imgbtn" data-insert-img>插入图片</button>
         <input type="file" accept="image/*" hidden data-img-file>
-        <span class="adm__hint">选图后上传并插到光标处，单张建议不超过 5MB</span>
+        <span class="adm__hint">也可直接把截图粘贴进正文，或拖进输入框</span>
       </div>`,
     note: () => `
       <label>日期<input name="date" type="date" value="${today()}" required></label>
-      <label>内容<textarea name="text" rows="5" required placeholder="想到就写。也可以插入图片。"></textarea></label>
+      <label>内容<textarea name="text" rows="5" required placeholder="想到就写。截图可直接 Ctrl+V 粘贴进来。"></textarea></label>
       <div class="adm__imgrow">
         <button type="button" class="adm__imgbtn" data-insert-img>插入图片</button>
         <input type="file" accept="image/*" hidden data-img-file>
-        <span class="adm__hint">选图后上传并插到光标处</span>
+        <span class="adm__hint">也可直接把截图粘贴进正文，或拖进输入框</span>
       </div>
       <label>标签（逗号分隔）<input name="tags" placeholder="想法"></label>`,
     photo: () => `
@@ -411,17 +411,29 @@
     return { blob, ext, base64: await base64Of(blob) };
   }
 
+  function firstClipboardImage(data) {
+    if (!data) return null;
+    const items = data.items ? Array.from(data.items) : [];
+    for (const item of items) {
+      if (item.type && item.type.indexOf('image/') === 0) {
+        const file = item.getAsFile();
+        if (file) return file;
+      }
+    }
+    const files = data.files ? Array.from(data.files) : [];
+    return files.find((f) => f.type && f.type.indexOf('image/') === 0) || null;
+  }
+
   function wireImageInsert(form, fieldName) {
     const ta = form.querySelector(`[name="${fieldName}"]`);
     const btn = form.querySelector('[data-insert-img]');
     const fileInput = form.querySelector('[data-img-file]');
     if (!ta || !btn || !fileInput) return;
 
-    btn.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', async () => {
-      const file = fileInput.files && fileInput.files[0];
-      fileInput.value = '';
-      if (!file) return;
+    let busy = false;
+    async function uploadAndInsert(file, from) {
+      if (!file || busy) return;
+      busy = true;
       const prev = btn.textContent;
       btn.disabled = true;
       btn.textContent = '处理中…';
@@ -432,16 +444,48 @@
         // 用站根路径 + ?v=，避免相对路径和部署前 404 被浏览器缓存成裂图
         const path = `assets/img/uploads/${id}.${prepared.ext}`;
         const src = `/${path}?v=${id}`;
-        const alt = (file.name.replace(/\.[^.]+$/, '') || '图片').slice(0, 40);
-        await commitFile(path, prepared.base64, '插图：' + (alt || file.name), true);
+        const alt = ((file.name || 'paste').replace(/\.[^.]+$/, '') || (from === 'paste' ? '粘贴的图片' : '图片')).slice(0, 40);
+        await commitFile(path, prepared.base64, '插图：' + alt, true);
         insertAtCursor(ta, `![${alt}](${src})`);
         toast('图片已插入。保存后等约 1 分钟刷新即可看到');
       } catch (err) {
         toast('失败：' + err.message, 'err');
       } finally {
+        busy = false;
         btn.disabled = false;
         btn.textContent = prev;
       }
+    }
+
+    btn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files && fileInput.files[0];
+      fileInput.value = '';
+      if (file) uploadAndInsert(file, 'file');
+    });
+
+    // 截图 / 复制的图直接 Ctrl+V 进正文
+    ta.addEventListener('paste', (e) => {
+      const file = firstClipboardImage(e.clipboardData);
+      if (!file) return;
+      e.preventDefault();
+      uploadAndInsert(file, 'paste');
+    });
+
+    // 也可以把图片拖进输入框
+    ta.addEventListener('dragover', (e) => {
+      if (firstClipboardImage(e.dataTransfer)) {
+        e.preventDefault();
+        ta.classList.add('is-drop');
+      }
+    });
+    ta.addEventListener('dragleave', () => ta.classList.remove('is-drop'));
+    ta.addEventListener('drop', (e) => {
+      ta.classList.remove('is-drop');
+      const file = firstClipboardImage(e.dataTransfer);
+      if (!file) return;
+      e.preventDefault();
+      uploadAndInsert(file, 'drop');
     });
   }
 

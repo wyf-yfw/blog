@@ -1456,6 +1456,11 @@ body.is-editing .adm-add { display: inline-flex; }
 .adm__form textarea { resize: vertical; font-family: var(--font-serif); font-size: 14px; }
 .adm__form input:focus,
 .adm__form textarea:focus { outline: 2px solid var(--ink); outline-offset: -1px; }
+.adm__form textarea.is-drop {
+  outline: 2px dashed var(--ink);
+  outline-offset: -1px;
+  background: rgba(10, 10, 11, 0.03);
+}
 
 .adm__row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
