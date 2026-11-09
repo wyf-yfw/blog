@@ -99,6 +99,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 
 /* ---------- 2.5 动效 ---------- */
 @keyframes page-in   { from { opacity: 0; } }
+@keyframes fade-in   { from { opacity: 0; } to { opacity: 1; } }
 @keyframes rise-in   { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes zoom-in   { from { opacity: 0; transform: scale(.985); } to { opacity: 1; transform: none; } }
 @keyframes drop-in   { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
@@ -218,45 +219,76 @@ body.is-leaving .foot {
 
 .nav__toggle svg { width: 16px; height: 16px; }
 
-/* ---------- 5. Hero ---------- */
+/* ---------- 5. Hero：首屏一句话 ---------- */
 .hero {
-  padding-top: clamp(64px, 10vw, 108px);
-  padding-bottom: clamp(24px, 4vw, 40px);
+  padding-top: clamp(72px, 13vw, 148px);
+  padding-bottom: clamp(36px, 6vw, 64px);
 }
 
-.hero__title {
-  font-family: var(--font-serif);
-  font-size: var(--fs-display);
-  line-height: 1.3;
-  letter-spacing: 0.01em;
-  max-width: 14em;
+.q {
+  margin: 0;
+  animation: rise-in .8s var(--ease) both;
+  animation-delay: .05s;
 }
 
-.hero__lede {
-  margin-top: 26px;
-  max-width: 30em;
-  font-size: var(--fs-sm);
-  color: var(--muted);
+/* 拉丁字形优先，中文回落户思源宋体 */
+.q__text {
+  font-family: "Source Serif 4", "Noto Serif SC", "Songti SC", Georgia, serif;
+  font-size: clamp(1.75rem, 4.1vw, 3rem);
+  line-height: 1.48;
+  letter-spacing: 0.005em;
+  color: var(--ink);
+  max-width: 16em;
+  text-wrap: pretty;
+  will-change: opacity, transform, filter;
 }
 
-.hero__links {
+.q__text[lang="zh"] {
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+}
+
+.q__meta {
   display: flex;
-  flex-wrap: wrap;
-  gap: 26px;
-  margin-top: 30px;
+  align-items: center;
+  gap: 14px;
+  margin-top: clamp(20px, 3vw, 30px);
   font-family: var(--font-mono);
   font-size: var(--fs-mono);
-  letter-spacing: 0.04em;
-}
-
-.hero__links a {
   color: var(--muted);
-  border-bottom: 1px solid var(--line-2);
-  padding-bottom: 2px;
-  transition: color .18s var(--ease), border-color .18s var(--ease);
+  letter-spacing: 0.04em;
+  opacity: 0;
+  animation: fade-in .5s var(--ease) both;
+  animation-delay: .15s;
 }
 
-.hero__links a:hover { color: var(--ink); border-color: var(--ink); }
+.q__toggle {
+  appearance: none;
+  background: none;
+  border: 1px solid var(--line-2);
+  border-radius: 2px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  padding: 5px 7px;
+  cursor: pointer;
+  opacity: .5;
+  transition: color .2s var(--ease), border-color .2s var(--ease), opacity .2s var(--ease);
+}
+
+.q:hover .q__toggle { opacity: 1; }
+
+.q__toggle:hover,
+.q__toggle[aria-pressed="true"] {
+  color: var(--ink);
+  border-color: var(--ink);
+  opacity: 1;
+}
+
+@media (max-width: 560px) {
+  .q__text { font-size: clamp(1.5rem, 7.2vw, 2rem); }
+}
 
 /* ---------- 5.5 社交图标 ---------- */
 .sicons {

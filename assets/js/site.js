@@ -172,6 +172,85 @@
       </article>`;
   }
 
+
+  /* ---------- 首屏短句 ---------- */
+  const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function renderHero() {
+    const box = document.querySelector('[data-quote]');
+    const list = window.KRIS_QUOTES || [];
+    if (!box || !list.length) return;
+
+    // 避免连续两次抽到同一句
+    let i = Math.floor(Math.random() * list.length);
+    if (list.length > 1 && String(i) === sessionStorage.getItem('quote-last')) {
+      i = (i + 1 + Math.floor(Math.random() * (list.length - 1))) % list.length;
+    }
+    sessionStorage.setItem('quote-last', String(i));
+
+    const q = list[i];
+    const foreign = !!q.zh;
+
+    const text = box.querySelector('.q__text');
+    const by = box.querySelector('.q__by');
+    const meta = box.querySelector('.q__meta');
+
+    text.textContent = q.text;
+    text.setAttribute('lang', foreign ? q.lang : 'zh');
+    by.textContent = q.author + (q.source || '');
+
+    // 外文才给「译」按钮
+    const oldBtn = box.querySelector('.q__toggle');
+    if (oldBtn) oldBtn.remove();
+
+    if (foreign) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'q__toggle';
+      btn.textContent = '译';
+      btn.setAttribute('aria-label', '显示中文译文');
+      btn.setAttribute('aria-pressed', 'false');
+      meta.appendChild(btn);
+
+      let showingZh = false;
+
+      btn.addEventListener('click', () => {
+        showingZh = !showingZh;
+        const next = showingZh ? q.zh : q.text;
+
+        btn.setAttribute('aria-pressed', String(showingZh));
+        btn.setAttribute('aria-label', showingZh ? '显示原文' : '显示中文译文');
+        btn.textContent = showingZh ? '原' : '译';
+        text.setAttribute('lang', showingZh ? 'zh' : q.lang);
+
+        if (reduceMotion() || !text.animate) {
+          text.textContent = next;
+          return;
+        }
+
+        // 溶解：原句上浮淡出，译文自下淡入
+        text.animate(
+          [
+            { opacity: 1, transform: 'translateY(0)', filter: 'blur(0)' },
+            { opacity: 0, transform: 'translateY(-8px)', filter: 'blur(3px)' }
+          ],
+          { duration: 260, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'forwards' }
+        ).finished.then(() => {
+          text.textContent = next;
+          return text.animate(
+            [
+              { opacity: 0, transform: 'translateY(8px)', filter: 'blur(3px)' },
+              { opacity: 1, transform: 'translateY(0)', filter: 'blur(0)' }
+            ],
+            { duration: 300, easing: 'cubic-bezier(.22,1,.36,1)' }
+          ).finished;
+        }).then(() => {
+          text.getAnimations().forEach((a) => a.cancel());
+        });
+      });
+    }
+  }
+
   /* 把渲染结果写进槽位，并切换空状态 */
   function setList(sel, html) {
     document.querySelectorAll(sel).forEach((el) => {
@@ -200,6 +279,7 @@
     };
 
     // 列表页保存后，新增的条目在这一页看不到，提示去对应页面
+    if (page === 'home' || page === 'index') renderHero();
     if (map[page]) map[page](data);
 
     document.dispatchEvent(new CustomEvent('kris:rendered', { detail: data }));

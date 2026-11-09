@@ -31,6 +31,7 @@ site/
 │   └── site.json     ★ 所有内容都在这里
 └── assets/
     ├── css/style.css 所有样式，改颜色改字体都在开头 :root 里
+    ├── js/quotes.js  首屏短句库（44 条，外文带中文译文）
     ├── js/site.js    按 content/site.json 渲染页面
     ├── js/main.js    交互：手机菜单、照片墙分栏、灯箱
     ├── js/admin.js   编辑模式（网页里直接写内容）
@@ -110,6 +111,18 @@ site/
 **改字体**：同样在 `:root` 里的 `--font-serif / --font-sans / --font-mono`。
 中文默认走系统字体（Mac 的苹方/宋体、Windows 的微软雅黑/思源），
 英文走 Google Fonts 的 Source Serif 4 / Inter / IBM Plex Mono。断网时会自动回退，不会崩。
+
+## 首屏短句
+
+首页顶部每次刷新随机显示一句，取自 `assets/js/quotes.js`。
+
+- 结构：`{ text: 原文, author, source, lang?, zh? }`
+- `lang` 是原文语言（`de`/`fr`/`en`/`da`），`zh` 是中文译文——**有 `zh` 才会出现「译」按钮**
+- 纯中文的句子不要写 `lang` 和 `zh`，只显示原文
+- 点「译」时原句上浮淡出、译文自下淡入（各 260/300ms）；再点一次换回原文，按钮变成「原」
+- 同一台设备不会连续抽到同一句（`sessionStorage` 记上一次）
+
+想加句子直接往数组里加一条；想删就把那一行删掉。改完记得升 `?v=` 版本号。
 
 ## 交互
 
