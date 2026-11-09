@@ -33,16 +33,22 @@
   }
 
   async function gh(path, opts) {
-    const res = await fetch(API + path, {
-      cache: 'no-store',
-      ...opts,
-      headers: {
-        Authorization: 'Bearer ' + ensureToken(),
-        Accept: 'application/vnd.github+json',
-        'Cache-Control': 'no-cache',
-        ...(opts && opts.headers)
-      }
-    });
+    let res;
+    try {
+      // 只用 fetch 的 cache: 'no-store' 防缓存；不要加 Cache-Control 请求头，
+      // 那会触发 CORS 预检，GitHub 不放行时浏览器只会报 Failed to fetch
+      res = await fetch(API + path, {
+        ...opts,
+        cache: 'no-store',
+        headers: {
+          Authorization: 'Bearer ' + ensureToken(),
+          Accept: 'application/vnd.github+json',
+          ...(opts && opts.headers)
+        }
+      });
+    } catch (e) {
+      throw new Error('连不上 GitHub（网络或跨域）。可关掉广告拦截后再试');
+    }
     if (!res.ok) {
       let detail = '';
       try { detail = (await res.json()).message || ''; } catch (e) { /* ignore */ }
@@ -67,7 +73,7 @@
   async function currentSha(path) {
     if (shaCache[path]) return shaCache[path];
     try {
-      const cur = await gh(`/repos/${REPO}/contents/${path}?ref=${BRANCH}`);
+      const cur = await gh(`/repos/${REPO}/contents/${path}?ref=${BRANCH}&_=${Date.now()}`);
       return cur.sha;
     } catch (e) {
       if (e.status === 404) return '';
