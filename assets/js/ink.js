@@ -29,12 +29,13 @@
   const SPREAD_R = 0.035;
   const SPREAD_TAU = 0.55;      // 涌出衰减时间（秒）
   const SPREAD_INK_TAU = 0.35;  // 涌出的水里墨变淡的时间：先浓后清，中心慢慢透亮
-  const JET_V = 1.6;            // 把墨推成瓣的几股水流（总冲量）
-  const SWIRL_V = 0.6;          // 瓣头的小涡
-  const VEL_FADE = 0.9;         // 水流每秒衰减
+  const JET_V = 1.15;           // 把墨推成瓣的几股水流（总冲量）
+  const SWIRL_V = 0.45;         // 瓣头的小涡
+  const VEL_FADE = 1.8;         // 水流每秒衰减：快一点，避免过一会儿又冲出一股
   const INK_FADE = 0.18;        // 墨每秒稀释
-  const CURL = 32;              // 涡度增强：细节卷起来的程度
-  const DRIFT = 0.07;           // 水里一直有的缓慢暗流，把墨拉成丝
+  const CURL = 16;              // 涡度增强：细节卷起来的程度
+  const DRIFT = 0.02;           // 落墨后短暂的缓慢暗流；随后关掉，不要一直灌水流
+  const DRIFT_TAU = 0.9;        // 暗流只在开头这一小段有，之后自然停
   const FADE_FROM = 5;          // 最后一滴落下几秒后加快散去
   const LIFE = 9;               // 最后一滴落下几秒后停下
 
@@ -562,9 +563,10 @@ void main() {
     U = use(prog.vorticity, vel);
     gl.uniform1i(U.uVelocity, bind(0, vel.read));
     gl.uniform1i(U.uCurl, bind(1, curl));
-    gl.uniform1f(U.curl, CURL);
+    gl.uniform1f(U.curl, CURL * Math.exp(-Math.max(0, quiet - 0.6) / 1.4));
     gl.uniform1f(U.dt, dt);
-    gl.uniform1f(U.drift, DRIFT * SIM_CELLS);
+    // 暗流只跟落墨后的头零点几秒，后面关掉，避免屏幕底下突然冲出一股水
+    gl.uniform1f(U.drift, DRIFT * SIM_CELLS * Math.exp(-quiet / DRIFT_TAU));
     gl.uniform1f(U.time, simT);
     gl.uniform2f(U.scale, scaleX, scaleY);
     blit(vel.write);
@@ -654,7 +656,7 @@ void main() {
         a: turn + ((i + rand(-0.35, 0.35)) * TAU) / count,
         s: JET_V * SIM_CELLS * (0.25 + 0.75 * Math.random() ** 2),
         r: DROP_R * 2 * rand(0.8, 1.4),
-        dur: rand(0.25, 0.6)
+        dur: rand(0.18, 0.4)
       });
     }
     drops.push({ u, v, born: simT, jets });
