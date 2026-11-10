@@ -1,8 +1,18 @@
 {
   "name": "kris-site",
   "private": true,
-  "description": "Kris personal site on Netlify",
-  "dependencies": {
-    "@netlify/blobs": "^11.1.9"
+  "type": "module",
+  "description": "Kris personal site on Cloudflare Workers",
+  "scripts": {
+    "test": "vitest run",
+    "dev": "wrangler dev --local-protocol https",
+    "deploy": "wrangler deploy",
+    "init-admin": "node scripts/init-admin.mjs",
+    "import-content": "node scripts/import-content.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.6.1",
+    "vitest": "^4.1.0",
+    "wrangler": "^4.45.0"
   }
 }

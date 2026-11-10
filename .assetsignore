@@ -1,0 +1,14 @@
+.git
+.github
+node_modules
+netlify
+docs
+tests
+migrations
+worker
+scripts
+wrangler.jsonc
+package.json
+package-lock.json
+vitest.config.js
+**/*.md
