@@ -97,5 +97,11 @@ export async function handleContent(request, env, session) {
     return json({ ok: true });
   }
 
+  if (path.startsWith("/api/admin/guestbook/") && request.method === "DELETE") {
+    const id = idFrom(path, "/api/admin/guestbook/");
+    await db.prepare("DELETE FROM guestbook WHERE id = ?").bind(id).run();
+    return json({ ok: true });
+  }
+
   return null;
 }
