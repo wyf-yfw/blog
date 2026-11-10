@@ -1,4 +1,4 @@
-/* 留言板：Netlify Forms 提交 + Function 拉列表 */
+/* 留言板：提交到 Netlify Function，Blobs 存储，即时上墙 */
 (function () {
   'use strict';
 
@@ -7,6 +7,8 @@
   const form = document.querySelector('[data-guestbook-form]');
   const statusEl = document.querySelector('[data-guestbook-status]');
   if (!listEl || !form) return;
+
+  const API = '/.netlify/functions/guestbook';
 
   const esc = (s) => String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -40,16 +42,14 @@
 
   async function loadList() {
     try {
-      const res = await fetch('/.netlify/functions/guestbook-list?t=' + Date.now(), {
-        cache: 'no-store'
-      });
+      const res = await fetch(API + '?t=' + Date.now(), { cache: 'no-store' });
       const data = await res.json();
       render(Array.isArray(data.items) ? data.items : []);
-      if (data.error === 'missing_config' && statusEl) {
-        statusEl.textContent = '留言墙待配置：请在 Netlify 环境变量里加上 NETLIFY_AUTH_TOKEN。';
-      }
     } catch (e) {
-      if (statusEl) statusEl.textContent = '暂时读不到留言，稍后再试。';
+      if (statusEl) {
+        statusEl.textContent = '暂时读不到留言，稍后再试。';
+        statusEl.dataset.kind = 'err';
+      }
     }
   }
 
@@ -63,9 +63,11 @@
     e.preventDefault();
     const btn = form.querySelector('[type="submit"]');
     const fd = new FormData(form);
-    // Netlify Forms 需要 urlencoded
-    const body = new URLSearchParams();
-    fd.forEach((v, k) => body.append(k, v));
+    const payload = {
+      name: String(fd.get('name') || '').trim(),
+      message: String(fd.get('message') || '').trim(),
+      'bot-field': String(fd.get('bot-field') || '')
+    };
 
     if (btn) {
       btn.disabled = true;
@@ -74,19 +76,21 @@
     setStatus('正在送出…');
 
     try {
-      const res = await fetch('/', {
+      const res = await fetch(API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body.toString()
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error('http_' + res.status);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.hint || data.error || ('http_' + res.status));
+      }
       form.reset();
       setStatus('已送出。', 'ok');
-      // Forms 入库略有延迟
-      setTimeout(loadList, 1200);
-      setTimeout(loadList, 3500);
+      if (Array.isArray(data.items)) render(data.items);
+      else loadList();
     } catch (err) {
-      setStatus('送出失败，请稍后重试。', 'err');
+      setStatus(err.message || '送出失败，请稍后重试。', 'err');
     } finally {
       if (btn) {
         btn.disabled = false;
