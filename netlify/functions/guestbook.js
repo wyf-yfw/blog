@@ -56,7 +56,7 @@ exports.handler = async (event) => {
 
   let store;
   try {
-    store = getStore('guestbook');
+    store = getStore({ name: 'guestbook', consistency: 'strong' });
   } catch (err) {
     return ok({ items: [], error: 'blobs_unavailable', hint: String(err && err.message || err) }, 503);
   }
