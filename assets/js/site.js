@@ -1,6 +1,6 @@
 /* ==========================================================================
    Kris — 页面数据渲染
-   所有内容来自 content/site.json；页面只是壳子。
+   所有内容来自 /api/site；页面只是壳子。
    没有数据时保留 HTML 里的 .empty 占位行。
    ========================================================================== */
 
@@ -8,7 +8,7 @@
   'use strict';
 
   const API = {
-    data: 'content/site.json',
+    data: '/api/site',
     dataUrl() {
       return this.data + '?v=' + Date.now();
     }
@@ -24,11 +24,11 @@
     .replace(/"/g, '&quot;');
 
   /* 极简标记：## 小标题、> 引用、- 列表、**粗体**、`代码`、![说明](图片地址) */
-  // 允许 assets/...、/assets/...，以及带 ?v= 防缓存参数
-  const safeSrc = (s) => /^(?:\/)?assets\/|https?:\/\//i.test(s || '');
+  // 允许 assets/...、/assets/...、/media/...，以及带 ?v= 防缓存参数
+  const safeSrc = (s) => /^(?:\/)?assets\/|^\/media\/|https?:\/\//i.test(s || '');
 
   const inline = (t) => esc(t)
-    .replace(/!\[([^\]]*)\]\(((?:\/)?assets\/[^)\s]+|https?:\/\/[^)\s]+)\)/gi,
+    .replace(/!\[([^\]]*)\]\(((?:\/)?assets\/[^)\s]+|\/media\/[^)\s]+|https?:\/\/[^)\s]+)\)/gi,
       '<img class="prose__inline-img" src="$2" alt="$1" loading="lazy">')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/`([^`]+)`/g, '<code>$1</code>');
@@ -524,20 +524,35 @@
 
   let lastFingerprint = '';
 
-  async function start() {
-    let data = { about: { paragraphs: [] }, articles: [], notes: [], photos: [], timeline: [] };
-    try {
-      const res = await fetch(API.dataUrl(), { cache: 'no-store' });
-      if (res.ok) data = await res.json();
-    } catch (e) {
-      /* file:// 或离线时保持空数据 */
-    }
-    if (!Array.isArray(data.timeline)) data.timeline = [];
-    lastFingerprint = dataFingerprint(data);
-    apply(data);
+  function showLoadError() {
+    document.querySelectorAll(".empty").forEach((el) => { el.hidden = true; });
+    const main = document.querySelector("#main");
+    if (!main || main.querySelector("[data-load-error]")) return;
+    const p = document.createElement("p");
+    p.className = "empty";
+    p.hidden = false;
+    p.dataset.loadError = "1";
+    p.textContent = "暂时读不到内容";
+    main.prepend(p);
   }
 
-  /* 后台内容有更新时，静默重拉 site.json，免手动刷新 */
+  async function start() {
+    try {
+      const res = await fetch(API.dataUrl(), { cache: "no-store" });
+      if (!res.ok) {
+        showLoadError();
+        return;
+      }
+      const data = await res.json();
+      if (!Array.isArray(data.timeline)) data.timeline = [];
+      lastFingerprint = dataFingerprint(data);
+      apply(data);
+    } catch (e) {
+      showLoadError();
+    }
+  }
+
+  /* 后台内容有更新时，静默重拉接口，免手动刷新 */
   async function softRefreshContent() {
     if (document.hidden) return;
     try {

@@ -1,4 +1,4 @@
-/* 留言板：提交到 Netlify Function，Blobs 存储，即时上墙 */
+/* 留言板：提交到 /api/guestbook，即时上墙 */
 (function () {
   'use strict';
 
@@ -8,7 +8,7 @@
   const statusEl = document.querySelector('[data-guestbook-status]');
   if (!listEl || !form) return;
 
-  const API = '/.netlify/functions/guestbook';
+  const API = "/api/guestbook";
 
   const esc = (s) => String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
