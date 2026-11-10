@@ -783,6 +783,15 @@ button.note__tag.is-on {
 
 .tl__item:last-child { padding-bottom: 0; }
 
+body.is-editing .tl__item.adm-host {
+  padding-right: 40px;
+}
+
+.tl__item > .adm-tools {
+  top: 0;
+  right: 0;
+}
+
 .tl__dot {
   position: absolute;
   left: 0;

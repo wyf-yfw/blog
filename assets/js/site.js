@@ -372,8 +372,11 @@
 
   function renderTimeline(data) {
     const items = (data.timeline || []).slice();
+    items.forEach((it) => {
+      if (!it.id) it.id = 'tl' + Math.random().toString(36).slice(2, 10);
+    });
     setList('[data-slot="timeline"]', items.map((it, i) => `
-      <li class="tl__item" data-kind="${esc(it.kind || '')}">
+      <li class="tl__item adm-host" data-kind="timeline" data-id="${esc(it.id)}" data-src-kind="${esc(it.kind || '')}">
         <span class="tl__dot" aria-hidden="true"></span>
         ${i < items.length - 1 ? '<span class="tl__rail" aria-hidden="true"></span>' : ''}
         <time class="tl__when" datetime="${esc(it.date || '')}">${fmtWhen(it.date)}</time>

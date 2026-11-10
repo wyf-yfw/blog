@@ -499,6 +499,25 @@
   }
 
   async function remove(kind, id) {
+    if (kind === 'timeline') {
+      const list = data().timeline || [];
+      const item = list.find((x) => x.id === id);
+      if (!item) return;
+      const label = item.text || item.date || '这条记录';
+      if (!confirm('删除这条时间线？\n「' + label.slice(0, 40) + '」')) return;
+      data().timeline = list.filter((x) => x.id !== id);
+      try {
+        // 删时间线本身不再往时间线追加记录
+        await saveJson('删除时间线：' + label.slice(0, 30));
+        toast('已删除');
+        closeSheet();
+        window.KRIS_RERENDER();
+      } catch (err) {
+        toast('失败：' + err.message, 'err');
+      }
+      return;
+    }
+
     const key = kind === 'article' ? 'articles' : kind === 'note' ? 'notes' : 'photos';
     const item = data()[key].find((x) => x.id === id);
     if (!item) return;
