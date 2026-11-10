@@ -93,7 +93,6 @@
   function renderHome(data) {
     const arts = (data.articles || []).slice().sort(newest).slice(0, 3);
     const notes = (data.notes || []).slice().sort(newest).slice(0, 6);
-    const photos = (data.photos || []).slice().sort(newest).slice(0, 5);
 
     setList('[data-slot="articles"]', arts.length ? arts.map((a) => `
       <div class="adm-host" data-kind="article" data-id="${esc(a.id)}">
@@ -115,11 +114,6 @@
           ${noteTagsHtml(n.tags, false)}
         </div>
       </article>`).join('') : '');
-
-    setList('[data-slot="photos"]', photos.length ? photos.map((p) => `
-      <div class="adm-host strip__cell" data-kind="photo" data-id="${esc(p.id)}">
-        <a href="moments.html"><img src="${esc(p.src)}" alt="${esc(p.caption)}" width="${p.width || 1200}" height="${p.height || 1200}" loading="lazy"></a>
-      </div>`).join('') : '');
   }
 
   /* ---------- 文章列表 ---------- */
@@ -347,16 +341,6 @@
     renderNotes(window.KRIS_DATA || { notes: [] });
   });
 
-  /* ---------- 照片 ---------- */
-  function renderMoments(data) {
-    const photos = (data.photos || []).slice().sort(newest);
-    setList('[data-slot="photos"]', photos.map((p) => `
-      <figure class="adm-host" data-kind="photo" data-id="${esc(p.id)}" data-src="${esc(p.src)}" data-cap="${esc(p.caption)}">
-        <img src="${esc(p.src)}" alt="${esc(p.caption)}" width="${p.width || 1200}" height="${p.height || 1200}" loading="lazy">
-        <figcaption>${esc(p.caption)}</figcaption>
-      </figure>`).join(''));
-  }
-
   /* ---------- 关于 ---------- */
   function renderAbout(data) {
     const ps = (data.about && data.about.paragraphs) || [];
@@ -510,7 +494,7 @@
     });
   }
 
-  const PERMALINK = { writing: 'writing.html', notes: 'notes.html', moments: 'moments.html' };
+  const PERMALINK = { writing: 'writing.html', notes: 'notes.html' };
 
   /* 用给定的数据把当前页渲染一遍（编辑器保存后走这里，不重新拉取） */
   function apply(data) {
@@ -524,7 +508,6 @@
       notes: renderNotes,
       about: renderAbout,
       post: renderPost,
-      moments: renderMoments,
       timeline: renderTimeline
     };
 

@@ -264,14 +264,12 @@
         if (!head) return;
         if (sec.querySelector('[data-slot="articles"]')) addNear(head, 'article', '写文章');
         if (sec.querySelector('[data-slot="notes"]')) addNear(head, 'note', '记手记');
-        if (sec.querySelector('[data-slot="photos"]')) addNear(head, 'photo', '传照片');
       });
     }
 
     const head = document.querySelector('.page-head');
     if (page === 'writing') addNear(head, 'article', '写文章');
     if (page === 'notes') addNear(head, 'note', '记手记');
-    if (page === 'moments') addNear(head, 'photo', '传照片');
     if (page === 'about' && head) {
       const aboutBody = document.querySelector('.intro');
       if (aboutBody) {
