@@ -1,3 +1,4 @@
+import { handleContent } from "./admin-content.js";
 import { clientIp, sha256Hex } from "./guestbook.js";
 import { fail, httpError, json, readJson } from "./http.js";
 import { verifyPassword } from "./password.js";
@@ -97,6 +98,10 @@ export async function handleAdmin(request, env) {
     const session = await requireSession(request, env, now);
     return withSession(json({ username: session.username }), session);
   }
+
+  const session = await requireSession(request, env, now);
+  const content = await handleContent(request, env, session);
+  if (content) return withSession(content, session);
 
   return fail(404, "not_found", "没有这个接口");
 }
