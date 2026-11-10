@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<script>
+document.documentElement.classList.add("js");
+(function () {
+  var KEY = "kris-build";
+  function check() {
+    fetch("version.json?t=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || !d.v) return;
+        var prev = localStorage.getItem(KEY);
+        if (prev && prev !== String(d.v)) {
+          localStorage.setItem(KEY, String(d.v));
+          location.reload();
+          return;
+        }
+        localStorage.setItem(KEY, String(d.v));
+      })
+      .catch(function () {});
+  }
+  check();
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) check();
+  });
+  window.addEventListener("focus", check);
+})();
+</script>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>留言 — Kris</title>
+<meta name="description" content="给 Kris 留言。">
+<meta name="theme-color" content="#f1efea">
+
+<link rel="icon" href="assets/img/avatar.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,300..600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=20261110c">
+</head>
+<body data-page="guestbook">
+
+<a class="skip" href="#main">跳到正文</a>
+
+<header class="nav" data-nav>
+  <div class="wrap nav__in">
+    <a class="brand" href="index.html">Kris</a>
+    <nav class="nav__links" id="nav-links" aria-label="主导航">
+      <a class="nav__link" href="index.html">首页</a>
+      <div class="nav__drop">
+        <a class="nav__link" href="writing.html">文章</a>
+        <div class="nav__sub" role="menu" aria-label="文章类别">
+          <a role="menuitem" href="writing.html?cat=学记">学记</a>
+          <a role="menuitem" href="writing.html?cat=省察">省察</a>
+          <a role="menuitem" href="writing.html?cat=所见">所见</a>
+          <a role="menuitem" href="writing.html?cat=存档">存档</a>
+        </div>
+      </div>
+      <a class="nav__link" href="notes.html">手记</a>
+      <a class="nav__link" href="timeline.html">时间线</a>
+      <a class="nav__link" href="guestbook.html" aria-current="page">留言</a>
+      <a class="nav__link" href="about.html">关于</a>
+      <span class="nav__line" data-nav-line aria-hidden="true"></span>
+    </nav>
+    <button class="nav__toggle" data-nav-toggle aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <path d="M4 8h16M4 16h16" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+    <div class="page-head">
+      <h1 class="page-head__title">留言</h1>
+      <p class="page-head__desc">来都来了，留下一笔也好。</p>
+    </div>
+
+    <form class="gb__form" name="guestbook" method="POST" data-netlify="true" netlify-honeypot="bot-field" data-guestbook-form>
+      <input type="hidden" name="form-name" value="guestbook">
+      <p class="gb__honey" aria-hidden="true">
+        <label>不要填 <input name="bot-field" tabindex="-1" autocomplete="off"></label>
+      </p>
+      <label class="gb__label">昵称
+        <input class="gb__input" name="name" type="text" required maxlength="40" placeholder="怎么称呼你" autocomplete="nickname">
+      </label>
+      <label class="gb__label">留言
+        <textarea class="gb__input gb__textarea" name="message" required maxlength="1000" rows="5" placeholder="想说的话"></textarea>
+      </label>
+      <div class="gb__actions">
+        <button class="gb__submit" type="submit">写下留言</button>
+        <p class="gb__status" data-guestbook-status role="status"></p>
+      </div>
+    </form>
+
+    <section class="gb__wall" aria-label="留言墙">
+      <h2 class="gb__wall-title">最近的留言</h2>
+      <div class="gb__list" data-guestbook-list hidden></div>
+      <p class="empty" data-guestbook-empty>还没有留言。来写第一条？</p>
+    </section>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__in">
+      <div>
+        <p class="foot__line">聊技术、约饭、指文章里的错，都行。</p>
+      </div>
+      <div class="foot__links">
+        <a href="writing.html">文章</a>
+        <a href="notes.html">手记</a>
+        <a href="timeline.html">时间线</a>
+        <a href="guestbook.html">留言</a>
+        <a href="about.html">关于</a>
+      </div>
+    </div>
+    <div class="foot__bottom">
+      <span>© 2021–2026 Kris</span>
+      <span>手写 HTML / CSS</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/main.js?v=20261109z"></script>
+<script src="assets/js/site.js?v=20261110b"></script>
+<script src="assets/js/admin.js?v=20261110b"></script>
+<script src="assets/js/guestbook.js?v=20261110a"></script>
+</body>
+</html>
