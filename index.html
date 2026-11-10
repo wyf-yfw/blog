@@ -2,35 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<script>
-document.documentElement.classList.add("js");
-/* 版本探针：version.json 一变就自动刷新，不用手动清缓存 */
-(function () {
-  var KEY = "kris-build";
-  function check() {
-    fetch("version.json?t=" + Date.now(), { cache: "no-store" })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) {
-        if (!d || !d.v) return;
-        var prev = localStorage.getItem(KEY);
-        if (prev && prev !== String(d.v)) {
-          localStorage.setItem(KEY, String(d.v));
-          location.reload();
-          return;
-        }
-        localStorage.setItem(KEY, String(d.v));
-      })
-      .catch(function () {});
-  }
-  check();
-  document.addEventListener("visibilitychange", function () {
-    if (!document.hidden) check();
-  });
-  window.addEventListener("focus", check);
-})();
-</script>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
+<script>document.documentElement.classList.add("js")</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kris</title>
 <meta name="description" content="Kris 的个人网站。">
@@ -135,6 +107,6 @@ document.documentElement.classList.add("js");
 <script src="assets/js/main.js?v=20261109z"></script>
 <script src="assets/js/ink.js?v=20261109c"></script>
 <script src="assets/js/quotes.js?v=20261109h"></script>
-<script src="assets/js/site.js?v=20261110b"></script>
+<script src="assets/js/site.js?v=20261110h"></script>
 </body>
 </html>

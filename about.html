@@ -2,35 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<script>
-document.documentElement.classList.add("js");
-/* 版本探针：version.json 一变就自动刷新，不用手动清缓存 */
-(function () {
-  var KEY = "kris-build";
-  function check() {
-    fetch("version.json?t=" + Date.now(), { cache: "no-store" })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) {
-        if (!d || !d.v) return;
-        var prev = localStorage.getItem(KEY);
-        if (prev && prev !== String(d.v)) {
-          localStorage.setItem(KEY, String(d.v));
-          location.reload();
-          return;
-        }
-        localStorage.setItem(KEY, String(d.v));
-      })
-      .catch(function () {});
-  }
-  check();
-  document.addEventListener("visibilitychange", function () {
-    if (!document.hidden) check();
-  });
-  window.addEventListener("focus", check);
-})();
-</script>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
+<script>document.documentElement.classList.add("js")</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>关于 — Kris</title>
 <meta name="description" content="关于 Kris。">
@@ -40,7 +12,7 @@ document.documentElement.classList.add("js");
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,300..600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20261110c">
+<link rel="stylesheet" href="assets/css/style.css?v=20261110h">
 </head>
 <body data-page="about">
 
@@ -118,6 +90,6 @@ document.documentElement.classList.add("js");
 </footer>
 
 <script src="assets/js/main.js?v=20261109z"></script>
-<script src="assets/js/site.js?v=20261110b"></script>
+<script src="assets/js/site.js?v=20261110h"></script>
 </body>
 </html>
