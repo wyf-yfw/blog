@@ -1,9 +1,11 @@
 import { fail } from "./http.js";
+import { handleSite } from "./site.js";
 
 export default {
   async fetch(request, env) {
     const path = new URL(request.url).pathname;
     try {
+      if (path === "/api/site") return handleSite(request, env);
       if (path.startsWith("/api/") || path.startsWith("/media/")) {
         return fail(404, "not_found", "没有这个接口");
       }
