@@ -1,7 +1,11 @@
 .git
 .github
+.wrangler
+.impeccable
 node_modules
 netlify
+netlify.toml
+content
 docs
 tests
 migrations

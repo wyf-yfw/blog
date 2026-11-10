@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "kris",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "1d2356f7-a066-4824-8024-ed5c1b96f6ae",
       "migrations_dir": "migrations"
     }
   ],

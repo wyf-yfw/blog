@@ -8,62 +8,46 @@
 
 直接用浏览器打开 `index.html` 就行，不需要构建、不需要装任何东西。
 
-想在本地起个服务（手机同局域网预览时更方便）：
+想在本地连上接口看内容：
 
 ```bash
 cd site
-python3 -m http.server 8080
-# 然后访问 http://localhost:8080
+npm run dev
 ```
+
+浏览器打开命令输出的本地地址。静态页面单独打开时读不到数据库里的内容。
 
 ## 目录
 
 ```
 site/
-├── index.html        首页（首屏 + 文章 / 手记 / 照片三个区块）
+├── index.html        首页（首屏 + 文章 / 手记）
 ├── writing.html      文章列表
 ├── notes.html        手记
-├── moments.html      照片墙
 ├── about.html        关于 + 联系方式
-├── timeline.html     时间线（保存内容时自动记节点）
+├── timeline.html     时间线
 ├── post.html         单篇文章（?p=文章id）
-├── CNAME             自定义域名（GitHub Pages 用）
-├── content/
-│   └── site.json     ★ 所有内容都在这里
+├── guestbook.html    留言
+├── admin.html        后台（不出现在公开导航里）
 └── assets/
     ├── css/style.css 所有样式，改颜色改字体都在开头 :root 里
     ├── js/quotes.js  首屏短句库（44 条，外文带中文译文）
-    ├── js/site.js    按 content/site.json 渲染页面
-    ├── js/main.js    交互：手机菜单、照片墙分栏、灯箱
+    ├── js/site.js    按 /api/site 渲染页面
+    ├── js/main.js    交互：手机菜单、灯箱
     ├── js/ink.js     首屏水墨（只有首页加载）
-    ├── js/admin.js   编辑模式（网页里直接写内容）
+    ├── js/admin-app.js 后台登录和编辑
     └── img/
         ├── avatar.svg    头像 / favicon
         └── shanshui.png  首屏水墨底下藏着的山水
 ```
 
-**内容和代码是分开的。** 所有文章、手记、照片、自我介绍都存在 `content/site.json` 里，
-样式和页面结构改动不会碰这个文件，改代码也不会把你的内容弄丢。
-每次保存都会在 Git 历史里留一版，写坏了可以从历史里翻回来。
+文章、手记、关于、时间线和留言存在 Cloudflare D1。插图存在 R2。页面只负责展示。
 
-## 在网页里写内容（不用命令行）
+## 在网页里写内容
 
-1. 打开 https://kriswang.me ，按 **Ctrl + Shift + E**（Mac 是 ⌘ + Shift + E）
-2. 输入编辑密码。右上角出现「编辑中」，页面上对应位置会出现 **+ / 编辑 / 删除** 图标
-   （例如首页「最近写的」旁有加号，每条内容右上角可改可删）
-3. 点图标后表单就在当前区块展开，填完点「保存并发布」。**第一次发布**时会再要一次
-   GitHub 令牌（写进仓库用的），之后留在本机，不用每次再输
-4. 约 1 分钟后线上生效；点右上角「退出」或再按一次快捷键结束编辑
+打开 `/admin`，用初始化时的用户名和密码登录。可以改文章、手记、关于，删除时间线和留言，也可以插入图片。保存后页面上会显示「已经生效」。刷新对应的公开页就能看到。
 
-做令牌（只需要一次）：GitHub → 头像 → Settings → Developer settings →
-**Personal access tokens → Fine-grained tokens** → Generate new token →
-仓库选 **Only select repositories → wyf-yfw/blog** → Permissions →
-Repository permissions → **Contents: Read and write** → 生成后复制。
-
-工具条上的「备份」会把当前 `content/site.json` 下载一份，留个底。
-
-编辑面板用密码挡一下随手乱点；真正写进仓库还是靠 GitHub 令牌的权限。
-密码写在前端，能看源码的人也能看到，别拿它当保险箱。
+账号只在第一次用 `npm run init-admin` 建立。密码只在终端里输入，不会写进页面或 Git。后台没有改密码的入口，要换密码就再跑一次这个命令。
 
 ## 联系方式
 
@@ -82,29 +66,9 @@ Repository permissions → **Contents: Read and write** → 生成后复制。
 改的时候搜 `krisyfwang`、`wyf-yfw`、`wyfyfw1`、`wg_peach666`、`w806137714`、`650800563`、`5332018867`
 就能在每个页面的页脚、首页首屏和关于页找到全部位置。
 
-## 直接改文件（备选）
+## 直接改页面
 
-不想用网页编辑器时，也可以手动改 `content/site.json`，格式：
-
-```json
-{
-  "about": { "paragraphs": ["第一段", "第二段"] },
-  "articles": [
-    { "id": "唯一 id", "date": "2026-11-09", "title": "标题",
-      "excerpt": "摘要", "category": "学记", "tags": ["可选主题词"], "minutes": 8,
-      "body": "空一行分段。\n\n## 小标题\n\n> 引用\n\n- 列表项" }
-  ],
-  "notes": [
-    { "id": "唯一 id", "date": "2026-11-09", "text": "内容", "tags": [] }
-  ],
-  "photos": [
-    { "id": "唯一 id", "src": "assets/img/uploads/xxx.jpg",
-      "caption": "说明", "date": "2026-11-09", "width": 1200, "height": 1500 }
-  ]
-}
-```
-
-`body` 支持：空一行分段、`## 小标题`、`> 引用`、`- 列表`、`**粗体**`、`` `代码` ``。
+正文在后台里写。标记支持空一行分段、`## 小标题`、`> 引用`、`- 列表`、`**粗体**`、`` `代码` ``，图片写成 `![说明](/media/文件名)`。
 
 **改名字**：全局搜索 `Kris`，替换成你的名字。涉及标题、导航、页脚。
 
@@ -140,10 +104,8 @@ Repository permissions → **Contents: Read and write** → 生成后复制。
   导航栏不参与，始终留在原位。只拦普通左键点击，新标签页、下载、`mailto:` 都不受影响。
 - **自定义光标**：桌面端隐藏原生指针，换成跟随的小墨点（缓动 0.18）；指到链接、按钮、照片时绽开一个 38px 细圆环。
   触屏、`prefers-reduced-motion`、以及编辑面板内都不启用。想关掉：删掉 `main.js` 里的 `initCursor()` 调用。
-- **时间线**：导航里的「时间线」页。编辑模式里保存文章 / 手记 / 照片 / 关于，或删除内容时，
-  会自动在 `content/site.json` 的 `timeline` 最前面加一条节点，页面上最新在最上。
-- **正文插图**：写文章或手记时可点「插入图片」，也可直接把截图 **Ctrl+V 粘贴**进正文，
-  或拖进输入框；会上传到 `assets/img/uploads/` 并插入 `![说明](路径)`。
+- **时间线**：导航里的「时间线」页。后台保存文章、手记、关于，或删除它们时，会自动加一条节点，最新在最上。
+- **正文插图**：后台写文章或手记时可点「插入图片」，也可把截图粘贴进正文，或拖进输入框。图片存到 R2，正文里是 `![说明](/media/…)`。
 - **首屏视差**：鼠标在首屏移动时，引文整体反向位移最多 7px，缓动 0.08，移出首屏回中。
 - **首屏水墨**：在首屏空白处点一下，像低头看一盆清水里滴进一滴墨——墨被几股方向随机的水流推开，
   长出不对称的瓣，瓣头卷成小涡，再被暗流拉成细丝慢慢漂开变淡，约 7 秒散尽；墨浓的地方透出藏在底下的山水。
@@ -161,28 +123,26 @@ Repository permissions → **Contents: Read and write** → 生成后复制。
 - **照片灯箱**：淡入 + 图片从 98.5% 微放大。
 - 窄屏时导航收进右上角按钮，点开是纵向菜单，`Esc` 关闭。
 - 照片墙点开是大图，支持 `←` `→` 翻页、`Esc` 关闭，三栏按图片高度自动配平。
-- 编辑模式：`Ctrl + Shift + E` 开关（详见上面「在网页里写内容」）。
 - 系统开了「减少动态效果」（`prefers-reduced-motion`）时，以上动画全部关掉，内容直接显示。
 
 ## 部署
 
-线上地址：**https://kriswang.me**
+当前可核对的地址：**https://kris.3540303589w.workers.dev**
 
-- 仓库：https://github.com/wyf-yfw/blog （`main` 分支根目录）
-- 托管：GitHub Pages，推上去自动构建，`.nojekyll` 跳过 Jekyll 处理
-- 域名：`kriswang.me`，仓库根目录的 `CNAME` 文件指定；`www` 和裸域名都指向它
-- HTTPS：Let's Encrypt 自动签发，强制跳转
-- DNS（阿里云）：`@` 四条 A 记录指向 `185.199.108-111.153`，`www` CNAME 到 `wyf-yfw.github.io`
+发布：
+
+```bash
+cd site
+npm test
+npm run deploy
+```
+
+`kriswang.me` 还没有接到这个 Worker。域名仍走原来的 DNS，`deploy.sh` 和 Netlify 不再用于日常发布。
+
+仓库：https://github.com/wyf-yfw/blog
 
 `main` 分支开了保护规则（Ruleset `protect-main`）：
 
 - 禁止删除 `main`
 - 禁止强推（force push），历史不能被改写
 - 只有仓库管理员（你）能推，其他人没有写权限
-
-改了代码直接 `git push` 就行，规则对你是放行的。
-
-换成别的托管也行，纯静态扔哪儿都能跑：
-
-- **Cloudflare Pages / Vercel**：新建项目，构建命令留空，输出目录填 `.`，再把域名 DNS 迁过去。
-- **自己的服务器**：把 `site/` 里的内容拷到 nginx 的静态目录即可。
