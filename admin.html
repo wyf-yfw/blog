@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<script>
+document.documentElement.classList.add("js");
+(function () {
+  var KEY = "kris-build";
+  function check() {
+    fetch("version.json?t=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || !d.v) return;
+        var prev = localStorage.getItem(KEY);
+        if (prev && prev !== String(d.v)) {
+          localStorage.setItem(KEY, String(d.v));
+          location.reload();
+          return;
+        }
+        localStorage.setItem(KEY, String(d.v));
+      })
+      .catch(function () {});
+  }
+  check();
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) check();
+  });
+  window.addEventListener("focus", check);
+})();
+</script>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>后台 — Kris</title>
+<meta name="description" content="Kris 的后台。">
+<meta name="theme-color" content="#f1efea">
+
+<link rel="icon" href="assets/img/avatar.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,300..600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=20261110c">
+</head>
+<body>
+<main id="main">
+  <div class="wrap">
+    <div class="page-head">
+      <h1 class="page-head__title">后台</h1>
+      <p class="page-head__desc"><a href="index.html">回首页</a></p>
+    </div>
+    <form class="adm__form" data-login hidden>
+      <label>用户名 <input name="username" autocomplete="username" required></label>
+      <label>密码 <input name="password" type="password" autocomplete="current-password" required></label>
+      <button class="gb__submit" type="submit">登录</button>
+      <p class="gb__status" data-login-status role="status"></p>
+    </form>
+    <div data-desk hidden>
+      <p class="gb__actions"><button type="button" data-logout>退出</button><span data-desk-status role="status"></span></p>
+      <section data-articles></section>
+      <section data-notes></section>
+      <section>
+        <h2>关于</h2>
+        <form class="adm__form" data-about>
+          <textarea name="paragraphs" rows="8"></textarea>
+          <button class="gb__submit" type="submit">保存关于</button>
+        </form>
+      </section>
+      <section data-timeline></section>
+      <section data-guestbook></section>
+    </div>
+  </div>
+</main>
+<script src="assets/js/admin-app.js?v=20261110d"></script>
+</body>
+</html>

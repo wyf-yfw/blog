@@ -22,3 +22,15 @@ test("公开脚本改向新接口，并有失败提示", () => {
   expect(siteJs).toContain("/media/");
   expect(guestbookJs).toContain('const API = "/api/guestbook"');
 });
+
+import admin from "../admin.html?raw";
+import adminJs from "../assets/js/admin-app.js?raw";
+
+test("后台页不进公开导航，脚本走登录接口", () => {
+  for (const html of pages) expect(html).not.toContain('href="admin.html"');
+  expect(admin).toContain('src="assets/js/admin-app.js');
+  expect(adminJs).toContain("/api/admin/login");
+  expect(adminJs).toContain("/api/admin/media");
+  expect(adminJs).toContain("1600");
+  expect(adminJs).not.toContain("password_hash");
+});
