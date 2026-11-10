@@ -5,6 +5,7 @@
 
 [functions]
   node_bundler = "esbuild"
+  external_node_modules = ["@netlify/blobs"]
 
 # HTML / JSON 短缓存，便于发版和留言刷新
 [[headers]]

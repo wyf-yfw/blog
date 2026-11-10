@@ -2,7 +2,7 @@
    GET  → 列表（最新在前）
    POST → 新增（昵称 + 内容；蜜罐字段非空则丢弃） */
 
-const { getStore } = require('@netlify/blobs');
+const { connectLambda, getStore } = require('@netlify/blobs');
 
 const cors = {
   'Content-Type': 'application/json; charset=utf-8',
@@ -45,6 +45,13 @@ function clientIp(event) {
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: cors, body: '' };
+  }
+
+  // 经典 Lambda 形态的 Function 必须先 connect，才能读到站点 Blobs 上下文
+  try {
+    connectLambda(event);
+  } catch (err) {
+    return ok({ items: [], error: 'blobs_connect_failed', hint: String(err && err.message || err) }, 503);
   }
 
   let store;
