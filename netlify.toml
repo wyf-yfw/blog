@@ -1,6 +1,10 @@
 [build]
+  command = "npm install --omit=dev"
   publish = "."
   functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
 
 # HTML / JSON 短缓存，便于发版和留言刷新
 [[headers]]

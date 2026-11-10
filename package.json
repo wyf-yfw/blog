@@ -1,0 +1,8 @@
+{
+  "name": "kris-site",
+  "private": true,
+  "description": "Kris personal site on Netlify",
+  "dependencies": {
+    "@netlify/blobs": "^11.1.9"
+  }
+}
