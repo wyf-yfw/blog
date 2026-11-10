@@ -137,7 +137,7 @@ npm test
 npm run deploy
 ```
 
-`kriswang.me` 还没有接到这个 Worker。域名仍走原来的 DNS，`deploy.sh` 和 Netlify 不再用于日常发布。
+`kriswang.me` 还没有接到这个 Worker，域名仍走原来的 DNS。日常发布只走 `npm run deploy`。
 
 仓库：https://github.com/wyf-yfw/blog
 
