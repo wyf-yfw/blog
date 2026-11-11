@@ -13,6 +13,8 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -27,17 +29,16 @@ jobs:
       - name: 跑测试
         run: npm test
 
-      - name: 检查有没有 Cloudflare 令牌
-        id: token
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN == '' }}
+      - name: 没有令牌时说明原因
+        if: env.CLOUDFLARE_API_TOKEN == ''
         run: |
-          echo "::notice title=跳过部署::还没有配置 CLOUDFLARE_API_TOKEN，这次只跑了测试。"
-          echo "skip=true" >> "$GITHUB_OUTPUT"
+          echo "::notice title=跳过部署::仓库里还没有配置 CLOUDFLARE_API_TOKEN，这次只跑了测试。"
+          echo "配置方法：Settings → Secrets and variables → Actions → New repository secret"
 
       - name: 部署到 Cloudflare
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+        if: env.CLOUDFLARE_API_TOKEN != ''
         uses: cloudflare/wrangler-action@v3
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
           accountId: 6f6313228c73cdb5db875d457647bb2e
           command: deploy
