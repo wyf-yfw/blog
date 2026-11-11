@@ -823,6 +823,15 @@ body[data-page="notes"] .ntags__pop[hidden] { display: none; }
   margin-top: 10px;
 }
 
+.page-head__year {
+  margin: 18px 0 0;
+  font-family: var(--font-serif);
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- 10.5 时间线（像一条向下的 git 分支） ---------- */
 .tl {
   list-style: none;
@@ -1114,6 +1123,76 @@ body.is-editing .tl__item.adm-host {
   object-fit: cover;
   filter: saturate(0.92);
 }
+
+.goals { margin-top: 0.35em; }
+
+.goals__title {
+  margin: 0 0 4px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+
+.goals__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.goals__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-serif);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.goals__item:last-child { border-bottom: 1px solid var(--line); }
+
+.goals__mark {
+  flex: none;
+  width: 11px;
+  height: 11px;
+  margin-top: 0.48em;
+  border: 1px solid var(--ink);
+}
+
+.goals__item.is-done .goals__mark { background: var(--ink); }
+
+.goals__item.is-done .goals__text {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.desk__goals {
+  border: 0;
+  margin: 28px 0 0;
+  padding: 0;
+}
+
+.desk__goals legend {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.desk__goal {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.desk__goal input[type="text"] { flex: 1; min-width: 0; }
 
 .now {
   display: grid;

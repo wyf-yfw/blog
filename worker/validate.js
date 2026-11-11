@@ -58,3 +58,21 @@ export function aboutInput(body) {
   if (!Array.isArray(list)) throw httpError(400, "invalid", "段落格式不对");
   return list.map((p) => String(p).trim()).filter(Boolean);
 }
+
+export function goalsInput(body) {
+  const source = body || {};
+  const year = Number(source.year);
+  if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+    throw httpError(400, "invalid", "年份不对");
+  }
+  if (!Array.isArray(source.items)) throw httpError(400, "invalid", "目标格式不对");
+  const items = [];
+  for (const item of source.items) {
+    const text = String((item && item.text) || "").trim();
+    if (!text) continue;
+    if (text.length > 80) throw httpError(400, "invalid", "目标太长了");
+    items.push({ text, done: Boolean(item && item.done) });
+    if (items.length > 20) throw httpError(400, "invalid", "目标太多了");
+  }
+  return { year, items };
+}

@@ -362,6 +362,22 @@
     const views = Math.max(0, Number(data.views) || 0);
     setList('[data-slot="about"]', ps.map((t) => '<p>' + inline(t) + '</p>').join('')
       + '<p class="intro__views">' + views + ' 次浏览</p>');
+    const goals = (data.about && data.about.goals) || {};
+    const items = Array.isArray(goals.items) ? goals.items : [];
+    if (!items.length) {
+      setList('[data-slot="goals"]', '');
+      return;
+    }
+    const year = goals.year ? esc(goals.year) + ' 年的目标' : '今年的目标';
+    setList('[data-slot="goals"]', '<h2 class="goals__title">' + year + '</h2><ul class="goals__list">'
+      + items.map((item) => {
+        const done = Boolean(item.done);
+        return '<li class="goals__item' + (done ? ' is-done' : '') + '">'
+          + '<span class="goals__mark" aria-hidden="true"></span>'
+          + '<span class="goals__text">' + (done ? '<span class="sr-only">已完成：</span>' : '') + esc(item.text) + '</span>'
+          + '</li>';
+      }).join('')
+      + '</ul>');
   }
 
   /* ---------- 时间线：最新在最上 ---------- */

@@ -10,7 +10,7 @@ test("空库返回空集合", async () => {
   expect(res.status).toBe(200);
   expect(res.headers.get("cache-control")).toBe("no-store");
   expect(await res.json()).toEqual({
-    about: { paragraphs: [] },
+    about: { paragraphs: [], goals: { year: null, items: [] } },
     articles: [],
     notes: [],
     timeline: [],

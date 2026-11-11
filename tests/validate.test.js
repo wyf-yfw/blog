@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { timelineText } from "../worker/timeline-text.js";
-import { aboutInput, articleInput, noteInput } from "../worker/validate.js";
+import { aboutInput, articleInput, goalsInput, noteInput } from "../worker/validate.js";
 
 const today = "2026-11-10";
 
@@ -34,6 +34,18 @@ test("手记要有正文，关于会丢掉空段", () => {
   expect(() => noteInput({ text: "  " }, today)).toThrowError(expect.objectContaining({ hint: "手记要有内容" }));
   expect(noteInput({ text: " 一句 " }, today)).toEqual({ date: today, text: "一句", tags: [] });
   expect(aboutInput({ paragraphs: [" 甲 ", "", "乙"] })).toEqual(["甲", "乙"]);
+});
+
+test("年度目标丢掉空行，并记住完成状态", () => {
+  expect(goalsInput({
+    year: 2026,
+    items: [{ text: " 写完 ", done: true }, { text: "  " }, { text: "跑步", done: false }],
+  })).toEqual({
+    year: 2026,
+    items: [{ text: "写完", done: true }, { text: "跑步", done: false }],
+  });
+  expect(() => goalsInput({ year: 1999, items: [] })).toThrowError(expect.objectContaining({ hint: "年份不对" }));
+  expect(() => goalsInput({ year: 2026, items: "不是列表" })).toThrowError(expect.objectContaining({ hint: "目标格式不对" }));
 });
 
 test("时间线文案按动作生成", () => {

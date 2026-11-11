@@ -901,6 +901,7 @@
     renderArticles(site.articles || [], drafts.items || []);
     renderNotes(site.notes || []);
     aboutForm.paragraphs.value = ((site.about && site.about.paragraphs) || []).join("\n\n");
+    renderGoalEditor(site);
     renderPlain(document.querySelector("[data-timeline]"), "时间线", site.timeline || [], function (item) {
       return { when: whenOf(item.date), text: item.text };
     }, async function (item) {
@@ -920,16 +921,57 @@
     showTab(currentTab);
   }
 
+  function goalRow(item) {
+    const row = document.createElement("div");
+    row.className = "desk__goal";
+    const box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = Boolean(item && item.done);
+    box.setAttribute("aria-label", "完成");
+    const text = document.createElement("input");
+    text.type = "text";
+    text.maxLength = 80;
+    text.placeholder = "今年想做成的事";
+    text.value = (item && item.text) || "";
+    const del = textButton("去掉", true);
+    del.addEventListener("click", function () { row.remove(); });
+    row.append(box, text, del);
+    return row;
+  }
+
+  function renderGoalEditor(site) {
+    const goals = (site.about && site.about.goals) || {};
+    const items = Array.isArray(goals.items) && goals.items.length ? goals.items : [null];
+    aboutForm.goalYear.value = goals.year || Number(todayYmd().slice(0, 4));
+    const list = aboutForm.querySelector("[data-goal-list]");
+    list.replaceChildren.apply(list, items.map(goalRow));
+  }
+
+  aboutForm.querySelector("[data-goal-add]").addEventListener("click", function () {
+    const row = goalRow(null);
+    aboutForm.querySelector("[data-goal-list]").appendChild(row);
+    row.querySelector('input[type="text"]').focus();
+  });
+
   aboutForm.addEventListener("submit", async function (e) {
     e.preventDefault();
     const paragraphs = aboutForm.paragraphs.value.split(/\n{2,}/).map(function (p) {
       return p.trim();
     }).filter(Boolean);
+    const items = [];
+    aboutForm.querySelectorAll(".desk__goal").forEach(function (row) {
+      const text = row.querySelector('input[type="text"]').value.trim();
+      if (!text) return;
+      items.push({ text: text, done: row.querySelector('input[type="checkbox"]').checked });
+    });
     try {
       await send("/api/admin/about", {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ paragraphs: paragraphs })
+        body: JSON.stringify({
+          paragraphs: paragraphs,
+          goals: { year: Number(aboutForm.goalYear.value), items: items }
+        })
       });
       deskStatus.textContent = "已经生效";
       await load();

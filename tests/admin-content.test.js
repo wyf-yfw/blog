@@ -71,3 +71,18 @@ test("关于按段落保存", async () => {
   const site = await (await worker.fetch(new Request("https://kris.test/api/site"), env)).json();
   expect(site.about.paragraphs).toEqual(["甲", "乙"]);
 });
+
+test("年度目标能保存，只改段落不会清掉", async () => {
+  const saved = await send("/api/admin/about", "PUT", {
+    paragraphs: ["甲"],
+    goals: { year: 2026, items: [{ text: "写完", done: true }, { text: "跑步", done: false }] },
+  });
+  expect(saved.status).toBe(200);
+  await send("/api/admin/about", "PUT", { paragraphs: ["甲", "乙"] });
+  const site = await (await worker.fetch(new Request("https://kris.test/api/site"), env)).json();
+  expect(site.about.paragraphs).toEqual(["甲", "乙"]);
+  expect(site.about.goals).toEqual({
+    year: 2026,
+    items: [{ text: "写完", done: true }, { text: "跑步", done: false }],
+  });
+});

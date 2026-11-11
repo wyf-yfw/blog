@@ -3,7 +3,7 @@ import { json, readJson } from "./http.js";
 import { newId } from "./ids.js";
 import { shanghaiNow } from "./time.js";
 import { recordTimeline } from "./timeline.js";
-import { aboutInput, articleInput, noteInput } from "./validate.js";
+import { aboutInput, articleInput, goalsInput, noteInput } from "./validate.js";
 
 function idFrom(path, prefix) {
   return decodeURIComponent(path.slice(prefix.length));
@@ -92,11 +92,19 @@ export async function handleContent(request, env, session) {
   }
 
   if (path === "/api/admin/about" && request.method === "PUT") {
-    const paragraphs = aboutInput(await readJson(request));
+    const body = await readJson(request);
+    const paragraphs = aboutInput(body);
     await db.prepare(
       `INSERT INTO about (id, paragraphs, updated_at) VALUES (1, ?, ?)
        ON CONFLICT(id) DO UPDATE SET paragraphs = excluded.paragraphs, updated_at = excluded.updated_at`
     ).bind(JSON.stringify(paragraphs), ts).run();
+    if (body.goals != null) {
+      const goals = goalsInput(body.goals);
+      await db.prepare(
+        `INSERT INTO goals (id, year, items, updated_at) VALUES (1, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET year = excluded.year, items = excluded.items, updated_at = excluded.updated_at`
+      ).bind(goals.year, JSON.stringify(goals.items), ts).run();
+    }
     await recordTimeline(db, "about", "update", "", now);
     return json({ ok: true });
   }

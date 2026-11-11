@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,300..600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20261111e">
+<link rel="stylesheet" href="assets/css/style.css?v=20261111f">
 </head>
 <body data-page="admin">
 <main id="main">
@@ -49,6 +49,12 @@
       <section class="desk__sec" data-panel="about" hidden>
         <form class="adm__form" data-about>
           <label>段落之间空一行 <textarea name="paragraphs" rows="8"></textarea></label>
+          <fieldset class="desk__goals">
+            <legend>年度目标</legend>
+            <label>年份 <input name="goalYear" type="number" min="2000" max="2100" required></label>
+            <div data-goal-list></div>
+            <p class="desk__form-actions"><button type="button" class="desk__btn" data-goal-add>加一条</button></p>
+          </fieldset>
           <button class="gb__submit" type="submit">保存关于</button>
         </form>
       </section>
@@ -61,6 +67,6 @@
     <div class="sheet" data-sheet hidden></div>
   </div>
 </main>
-<script src="assets/js/admin-app.js?v=20261111e"></script>
+<script src="assets/js/admin-app.js?v=20261111f"></script>
 </body>
 </html>
