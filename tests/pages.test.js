@@ -7,10 +7,12 @@ import notes from "../notes.html?raw";
 import post from "../post.html?raw";
 import siteJs from "../assets/js/site.js?raw";
 import timeline from "../timeline.html?raw";
+import linksPage from "../links.html?raw";
+import linksJs from "../assets/js/links.js?raw";
 import starsPage from "../stars.html?raw";
 import writing from "../writing.html?raw";
 
-const pages = [index, writing, notes, timeline, about, post, guestbook, starsPage];
+const pages = [index, writing, notes, timeline, about, post, guestbook, starsPage, linksPage];
 
 test("公开页不再引用页内编辑脚本", () => {
   for (const html of pages) expect(html).not.toContain("admin.js");
@@ -46,6 +48,15 @@ test("后台页不进公开导航，脚本走登录接口", () => {
 test("推荐页不把同步失败原因给访客看，缓存和其他页一致", () => {
   expect(starsJs).not.toContain("data.message");
   expect(headers).toContain("/stars\n");
+  expect(headers).toContain("/links\n");
+  expect(linksPage).toContain('href="links.html" aria-current="page"');
+  expect(linksPage).toContain("申请友链");
+  expect(linksJs).toContain("/api/links");
+  expect(linksJs).toContain("method: \"POST\"");
+  expect(adminJs).toContain("/approve");
+  expect(adminJs).toContain("/reject");
+  expect(adminJs).toContain("同意");
+  expect(adminJs).toContain("不同意");
 });
 
 test("关掉写作页不会把草稿再存回去，长文保存不带 keepalive", () => {

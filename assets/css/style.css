@@ -1635,6 +1635,112 @@ body[data-page="admin"] .desk__goal input[type="text"] {
   .star__meta { font-size: 0.625rem; }
 }
 
+/* ---------- 18.7 友链 ---------- */
+.friends { margin-top: 8px; }
+
+.friend {
+  display: grid;
+  grid-template-columns: minmax(0, 12em) minmax(0, 1fr);
+  gap: 6px 24px;
+  align-items: baseline;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.friend__name {
+  font-family: var(--font-serif);
+  font-size: var(--fs-body);
+  color: var(--ink);
+}
+
+.friend:hover .friend__name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.friend__note {
+  font-size: var(--fs-sm);
+  color: var(--body);
+  line-height: 1.6;
+}
+
+@media (max-width: 760px) {
+  .friend { grid-template-columns: 1fr; gap: 4px; }
+}
+
+.friend-apply {
+  max-width: var(--text);
+  margin-top: clamp(48px, 6vw, 72px);
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+
+.friend-apply__title {
+  margin: 0 0 8px;
+  font-family: var(--font-serif);
+  font-size: var(--fs-h2);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.friend-apply__desc {
+  margin: 0 0 22px;
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.friend-apply .gb__form { margin-bottom: 0; }
+
+body[data-page="admin"] .desk__apply-title {
+  margin: 28px 0 8px;
+  font-family: var(--font-serif);
+  font-size: var(--fs-h2);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+body[data-page="admin"] .desk__apply {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 18px;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+body[data-page="admin"] .desk__apply-name {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--fs-body);
+  color: var(--ink);
+}
+
+body[data-page="admin"] .desk__apply-url {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  color: var(--muted);
+  word-break: break-all;
+}
+
+body[data-page="admin"] .desk__apply-note {
+  margin: 6px 0 0;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--body);
+}
+
+body[data-page="admin"] .desk__apply-ops {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 760px) {
+  body[data-page="admin"] .desk__apply { grid-template-columns: 1fr; }
+}
+
 /* ---------- 19. 小工具 ---------- */
 .hidden { display: none !important; }
 [hidden] { display: none !important; }

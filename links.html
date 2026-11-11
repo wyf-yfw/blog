@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<script>document.documentElement.classList.add("js")</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>友链 — Kris</title>
+<meta name="description" content="Kris 的友链。">
+<meta name="theme-color" content="#f1efea">
+
+<link rel="icon" href="assets/img/avatar.svg?v=20261111h">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,300..600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=20261111h">
+</head>
+<body data-page="links">
+
+<a class="skip" href="#main">跳到正文</a>
+
+<header class="nav" data-nav>
+  <div class="wrap nav__in">
+    <a class="brand" href="index.html">Kris</a>
+    <nav class="nav__links" id="nav-links" aria-label="主导航">
+      <a class="nav__link" href="index.html">首页</a>
+      <div class="nav__drop">
+        <a class="nav__link" href="writing.html">文章</a>
+        <div class="nav__sub" role="menu" aria-label="文章类别">
+          <a role="menuitem" href="writing.html?cat=学记">学记</a>
+          <a role="menuitem" href="writing.html?cat=省察">省察</a>
+          <a role="menuitem" href="writing.html?cat=所见">所见</a>
+          <a role="menuitem" href="writing.html?cat=存档">存档</a>
+        </div>
+      </div>
+      <a class="nav__link" href="notes.html">手记</a>
+      <a class="nav__link" href="timeline.html">时间线</a>
+      <a class="nav__link" href="stars.html">推荐</a>
+      <a class="nav__link" href="guestbook.html">留言</a>
+      <a class="nav__link" href="links.html" aria-current="page">友链</a>
+      <a class="nav__link" href="about.html">关于</a>
+      <span class="nav__line" data-nav-line aria-hidden="true"></span>
+    </nav>
+    <button class="nav__toggle" data-nav-toggle aria-label="打开菜单" aria-expanded="false" aria-controls="nav-links">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <path d="M4 8h16M4 16h16" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+    <div class="page-head">
+      <h1 class="page-head__title">友链</h1>
+      <p class="page-head__desc">朋友们的站点。</p>
+    </div>
+    <div class="friends" data-links></div>
+    <p class="empty" data-links-empty>还没有友链。</p>
+    <section class="friend-apply" aria-labelledby="link-apply-title">
+      <h2 id="link-apply-title" class="friend-apply__title">申请友链</h2>
+      <p class="friend-apply__desc">留下站点名、网址和一句介绍。我看过并同意之后，才会出现在上面。</p>
+      <form class="gb__form" data-link-form>
+        <p class="gb__honey" aria-hidden="true">
+          <label>不要填 <input name="bot-field" tabindex="-1" autocomplete="off"></label>
+        </p>
+        <label class="gb__label">站点名
+          <input class="gb__input" name="name" type="text" required maxlength="40" placeholder="站点名" autocomplete="organization">
+        </label>
+        <label class="gb__label">网址
+          <input class="gb__input" name="url" type="url" required maxlength="300" placeholder="https://" inputmode="url" autocomplete="url">
+        </label>
+        <label class="gb__label">介绍
+          <input class="gb__input" name="note" type="text" maxlength="80" placeholder="一句介绍，可以空着">
+        </label>
+        <div class="gb__actions">
+          <button class="gb__submit" type="submit">提交申请</button>
+          <p class="gb__status" data-link-status role="status"></p>
+        </div>
+      </form>
+    </section>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__in">
+      <div>
+        <p class="foot__line">随心所欲，畅所欲言。</p>
+      </div>
+      <div class="foot__links">
+        <a href="writing.html">文章</a>
+        <a href="notes.html">手记</a>
+        <a href="timeline.html">时间线</a>
+        <a href="stars.html">推荐</a>
+        <a href="guestbook.html">留言</a>
+        <a href="links.html">友链</a>
+        <a href="about.html">关于</a>
+      </div>
+    </div>
+    <div class="foot__bottom">
+      <span>© 2026 Kris</span>
+      <span>手写 HTML / CSS</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/main.js?v=20261111h"></script>
+<script src="assets/js/links.js?v=20261111h"></script>
+</body>
+</html>

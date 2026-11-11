@@ -2,6 +2,7 @@ import { handleAdmin } from "./auth.js";
 import { handleGuestbook } from "./guestbook.js";
 import { fail } from "./http.js";
 import { handleMedia, handleUpload } from "./media.js";
+import { handleLinks } from "./links.js";
 import { handleSite } from "./site.js";
 import { handleStars, syncStars } from "./stars.js";
 import { handleView } from "./views.js";
@@ -16,6 +17,7 @@ export default {
         return await handleGuestbook(request, env);
       }
       if (path === "/api/stars") return await handleStars(env);
+      if (path === "/api/links") return await handleLinks(request, env);
       if (path === "/api/view") return await handleView(request, env);
       if (path === "/api/admin/media" && request.method === "POST") return await handleUpload(request, env);
       if (path.startsWith("/api/admin/")) return await handleAdmin(request, env);

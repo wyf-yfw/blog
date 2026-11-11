@@ -59,6 +59,30 @@ export function aboutInput(body) {
   return list.map((p) => String(p).trim()).filter(Boolean);
 }
 
+export function linkUrlKey(url) {
+  const parsed = new URL(url);
+  parsed.hash = "";
+  const path = parsed.pathname.replace(/\/+$/, "");
+  return parsed.protocol + "//" + parsed.host + path + parsed.search;
+}
+
+export function linkApplyInput(body) {
+  const source = body || {};
+  const name = String(source.name || "").trim();
+  const url = String(source.url || "").trim();
+  const note = String(source.note || "").trim();
+  if (!name || !url) throw httpError(400, "invalid", "名字和网址都要填");
+  if (name.length > 40) throw httpError(400, "invalid", "名字太长了");
+  if (note.length > 80) throw httpError(400, "invalid", "介绍太长了");
+  if (url.length > 300 || /\s/.test(url)) throw httpError(400, "invalid", "网址不对");
+  let parsed;
+  try { parsed = new URL(url); } catch (e) { throw httpError(400, "invalid", "网址不对"); }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw httpError(400, "invalid", "网址不对");
+  }
+  return { name, url, note };
+}
+
 export function goalsInput(body) {
   const source = body || {};
   const year = Number(source.year);

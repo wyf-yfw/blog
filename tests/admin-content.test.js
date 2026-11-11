@@ -86,3 +86,49 @@ test("年度目标能保存，只改段落不会清掉", async () => {
     items: [{ text: "写完", done: true }, { text: "跑步", done: false }],
   });
 });
+
+test("友链申请要审核，不同意和没审的都不公开", async () => {
+  const before = await env.DB.prepare("SELECT COUNT(*) AS n FROM timeline").first();
+  const applied = await worker.fetch(new Request("https://kris.test/api/links", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.10" },
+    body: JSON.stringify({ name: "甲", url: "https://example.com/a", note: "一句" }),
+  }), env);
+  expect(applied.status).toBe(200);
+  const hidden = await (await worker.fetch(new Request("https://kris.test/api/links"), env)).json();
+  expect(hidden.items).toEqual([]);
+  const queue = await (await send("/api/admin/links", "GET")).json();
+  expect(queue.pending).toEqual([expect.objectContaining({ name: "甲", url: "https://example.com/a", note: "一句" })]);
+  const id = queue.pending[0].id;
+
+  const again = await worker.fetch(new Request("https://kris.test/api/links", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.11" },
+    body: JSON.stringify({ name: "甲二", url: "https://example.com/a/", note: "" }),
+  }), env);
+  expect(again.status).toBe(409);
+
+  const approved = await send("/api/admin/links/" + id + "/approve", "POST");
+  expect(approved.status).toBe(200);
+  const open = await (await worker.fetch(new Request("https://kris.test/api/links"), env)).json();
+  expect(open.items).toEqual([{ name: "甲", url: "https://example.com/a", note: "一句" }]);
+
+  const second = await worker.fetch(new Request("https://kris.test/api/links", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.12" },
+    body: JSON.stringify({ name: "乙", url: "https://example.org", note: "" }),
+  }), env);
+  expect(second.status).toBe(200);
+  const queued = await (await send("/api/admin/links", "GET")).json();
+  const other = queued.pending[0].id;
+  const rejected = await send("/api/admin/links/" + other + "/reject", "POST");
+  expect(rejected.status).toBe(200);
+  await send("/api/admin/links/" + other + "/approve", "POST");
+  const after = await (await worker.fetch(new Request("https://kris.test/api/links"), env)).json();
+  expect(after.items.map((item) => item.name)).toEqual(["甲"]);
+  const decided = await (await send("/api/admin/links", "GET")).json();
+  expect(decided.pending).toEqual([]);
+  expect(decided.rejected.map((item) => item.name)).toEqual(["乙"]);
+  const timeline = await env.DB.prepare("SELECT COUNT(*) AS n FROM timeline").first();
+  expect(timeline.n).toBe(before.n);
+});

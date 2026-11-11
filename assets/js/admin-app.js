@@ -902,6 +902,7 @@
     renderNotes(site.notes || []);
     aboutForm.paragraphs.value = ((site.about && site.about.paragraphs) || []).join("\n\n");
     renderGoalEditor(site);
+    renderLinkReview(await send("/api/admin/links"));
     renderPlain(document.querySelector("[data-timeline]"), "时间线", site.timeline || [], function (item) {
       return { when: whenOf(item.date), text: item.text };
     }, async function (item) {
@@ -919,6 +920,105 @@
     renderViews(site);
     renderStars();
     showTab(currentTab);
+  }
+
+  function safeHref(url) {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "";
+      return parsed.href;
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function applyCard(item, withActions) {
+    const row = document.createElement("article");
+    row.className = "desk__apply";
+    const main = document.createElement("div");
+    const name = document.createElement("p");
+    name.className = "desk__apply-name";
+    name.textContent = item.name;
+    const url = document.createElement("a");
+    url.className = "desk__apply-url";
+    const href = safeHref(item.url);
+    if (href) {
+      url.href = href;
+      url.target = "_blank";
+      url.rel = "noopener noreferrer";
+    }
+    url.textContent = item.url;
+    main.append(name, url);
+    if (item.note) {
+      const note = document.createElement("p");
+      note.className = "desk__apply-note";
+      note.textContent = item.note;
+      main.appendChild(note);
+    }
+    row.appendChild(main);
+    if (withActions) {
+      const ops = document.createElement("div");
+      ops.className = "desk__apply-ops";
+      const yes = textButton("同意", false);
+      const no = textButton("不同意", true);
+      yes.addEventListener("click", function () { decide(item.id, "approve", yes, no); });
+      no.addEventListener("click", function () { decide(item.id, "reject", yes, no); });
+      ops.append(yes, no);
+      row.appendChild(ops);
+    }
+    return row;
+  }
+
+  async function decide(id, action, yes, no) {
+    yes.disabled = true;
+    no.disabled = true;
+    try {
+      const path = action === "approve" ? "/approve" : "/reject";
+      await send("/api/admin/links/" + encodeURIComponent(id) + path, { method: "POST" });
+      deskStatus.textContent = action === "approve" ? "已上架" : "没有上架";
+      await load();
+    } catch (err) {
+      deskStatus.textContent = err.message;
+      yes.disabled = false;
+      no.disabled = false;
+    }
+  }
+
+  function reviewGroup(title, hint, items, withActions, emptyText) {
+    const block = document.createElement("section");
+    const head = document.createElement("h2");
+    head.className = "desk__apply-title";
+    head.textContent = title;
+    block.appendChild(head);
+    if (hint) {
+      const note = document.createElement("p");
+      note.className = "desk__hint";
+      note.textContent = hint;
+      block.appendChild(note);
+    }
+    if (!items.length) {
+      const empty = document.createElement("p");
+      empty.className = "desk__empty";
+      empty.textContent = emptyText;
+      block.appendChild(empty);
+      return block;
+    }
+    items.forEach(function (item) { block.appendChild(applyCard(item, withActions)); });
+    return block;
+  }
+
+  function renderLinkReview(data) {
+    const section = document.querySelector("[data-link-review]");
+    if (!section) return;
+    const pending = (data && data.pending) || [];
+    const approved = (data && data.approved) || [];
+    const rejected = (data && data.rejected) || [];
+    const parts = [
+      reviewGroup("待审核", "同意之后才会出现在友链页。", pending, true, "还没有待审核的申请。"),
+      reviewGroup("已上架", "", approved, false, "还没有上架的友链。")
+    ];
+    if (rejected.length) parts.push(reviewGroup("未通过", "", rejected, false, ""));
+    section.replaceChildren.apply(section, parts);
   }
 
   function goalRow(item) {

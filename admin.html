@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,300..600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20261111f">
+<link rel="stylesheet" href="assets/css/style.css?v=20261111h">
 </head>
 <body data-page="admin">
 <main id="main">
@@ -36,6 +36,7 @@
           <button type="button" role="tab" data-tab="timeline" aria-selected="false">时间线</button>
           <button type="button" role="tab" data-tab="stars" aria-selected="false">推荐</button>
           <button type="button" role="tab" data-tab="guestbook" aria-selected="false">留言</button>
+          <button type="button" role="tab" data-tab="links" aria-selected="false">友链</button>
           <button type="button" role="tab" data-tab="views" aria-selected="false">浏览</button>
           <button type="button" role="tab" data-tab="quota" aria-selected="false">额度</button>
         </div>
@@ -62,12 +63,15 @@
       <section data-timeline data-panel="timeline" hidden></section>
       <section class="desk__sec" data-panel="stars" hidden></section>
       <section data-guestbook data-panel="guestbook" hidden></section>
+      <section class="desk__sec" data-panel="links" hidden>
+        <div data-link-review></div>
+      </section>
       <section data-views data-panel="views" hidden></section>
       <section class="desk__sec" data-quota data-panel="quota" hidden></section>
     </div>
     <div class="sheet" data-sheet hidden></div>
   </div>
 </main>
-<script src="assets/js/admin-app.js?v=20261111f"></script>
+<script src="assets/js/admin-app.js?v=20261111h"></script>
 </body>
 </html>

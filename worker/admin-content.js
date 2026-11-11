@@ -3,6 +3,7 @@ import { json, readJson } from "./http.js";
 import { newId } from "./ids.js";
 import { shanghaiNow } from "./time.js";
 import { recordTimeline } from "./timeline.js";
+import { decideLink, listForAdmin } from "./links.js";
 import { aboutInput, articleInput, goalsInput, noteInput } from "./validate.js";
 
 function idFrom(path, prefix) {
@@ -106,6 +107,22 @@ export async function handleContent(request, env, session) {
       ).bind(goals.year, JSON.stringify(goals.items), ts).run();
     }
     await recordTimeline(db, "about", "update", "", now);
+    return json({ ok: true });
+  }
+
+  if (path === "/api/admin/links" && request.method === "GET") {
+    return json(await listForAdmin(db));
+  }
+
+  if (path.startsWith("/api/admin/links/") && request.method === "POST") {
+    const rest = path.slice("/api/admin/links/".length);
+    const cut = rest.lastIndexOf("/");
+    if (cut <= 0) return null;
+    const action = rest.slice(cut + 1);
+    if (action !== "approve" && action !== "reject") return null;
+    const id = decodeURIComponent(rest.slice(0, cut));
+    const found = await decideLink(db, id, action, now);
+    if (!found) return json({ error: "not_found", hint: "没有这条申请" }, 404);
     return json({ ok: true });
   }
 

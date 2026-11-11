@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { timelineText } from "../worker/timeline-text.js";
-import { aboutInput, articleInput, goalsInput, noteInput } from "../worker/validate.js";
+import { aboutInput, articleInput, goalsInput, linkApplyInput, linkUrlKey, noteInput } from "../worker/validate.js";
 
 const today = "2026-11-10";
 
@@ -46,6 +46,17 @@ test("年度目标丢掉空行，并记住完成状态", () => {
   });
   expect(() => goalsInput({ year: 1999, items: [] })).toThrowError(expect.objectContaining({ hint: "年份不对" }));
   expect(() => goalsInput({ year: 2026, items: "不是列表" })).toThrowError(expect.objectContaining({ hint: "目标格式不对" }));
+});
+
+test("友链申请只收名字、网址和一句介绍", () => {
+  expect(linkApplyInput({ name: " 甲 ", url: " https://example.com/a ", note: " 一句 " })).toEqual({
+    name: "甲", url: "https://example.com/a", note: "一句",
+  });
+  expect(linkUrlKey("https://Example.com/")).toBe(linkUrlKey("https://example.com"));
+  expect(() => linkApplyInput({ name: "甲", url: "" })).toThrowError(expect.objectContaining({ hint: "名字和网址都要填" }));
+  expect(() => linkApplyInput({ name: "甲", url: "javascript:alert(1)" })).toThrowError(expect.objectContaining({ hint: "网址不对" }));
+  expect(() => linkApplyInput({ name: "甲".repeat(41), url: "https://example.com" })).toThrowError(expect.objectContaining({ hint: "名字太长了" }));
+  expect(() => linkApplyInput({ name: "甲", url: "https://example.com", note: "字".repeat(81) })).toThrowError(expect.objectContaining({ hint: "介绍太长了" }));
 });
 
 test("时间线文案按动作生成", () => {
