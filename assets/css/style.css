@@ -2275,6 +2275,27 @@ body[data-page="admin"] .sheet__bar .desk__hint {
   margin: 0;
 }
 
+/* 草稿状态：未保存时淡一点，存好了变墨色，失败偏红 */
+body[data-page="admin"] .desk__draft {
+  transition: color .2s var(--ease), opacity .2s var(--ease);
+  opacity: .75;
+}
+
+body[data-page="admin"] .desk__draft[data-tone="ok"] {
+  color: var(--ink);
+  opacity: 1;
+}
+
+body[data-page="admin"] .desk__draft[data-tone="dirty"] {
+  color: var(--ink);
+  opacity: .55;
+}
+
+body[data-page="admin"] .desk__draft[data-tone="bad"] {
+  color: #8a2a1f;
+  opacity: 1;
+}
+
 body[data-page="admin"] .sheet__bar-side {
   display: flex;
   align-items: center;

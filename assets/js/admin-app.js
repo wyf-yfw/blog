@@ -346,13 +346,28 @@
 
     /* ---------- 草稿：每 30 秒存一次，返回/刷新前再补存一次 ---------- */
     const draftHint = form.querySelector("[data-draft]");
+    const side = form.querySelector(".sheet__bar-side");
     let dirty = false;
 
-    const clock = function () {
+    const hhmm = function (value) {
+      const d = value ? new Date(value) : new Date();
+      if (Number.isNaN(d.getTime())) return "";
       return new Intl.DateTimeFormat("zh-CN", {
         timeZone: "Asia/Shanghai", hour: "2-digit", minute: "2-digit", hour12: false
-      }).format(new Date());
+      }).format(d);
     };
+
+    const hint = function (text, tone) {
+      if (!draftHint) return;
+      draftHint.textContent = text;
+      draftHint.dataset.tone = tone || "";
+    };
+
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "button";
+    saveBtn.className = "desk__btn";
+    saveBtn.textContent = "存草稿";
+    side.prepend(saveBtn);
 
     const saveDraft = function (silent) {
       const data = payload();
@@ -364,14 +379,28 @@
         keepalive: true
       }).then(function () {
         dirty = false;
-        if (draftHint) draftHint.textContent = "草稿 " + clock();
+        hint("草稿已保存 " + hhmm(), "ok");
       }).catch(function () {
-        if (draftHint) draftHint.textContent = "草稿没存上";
+        hint("草稿没存上", "bad");
       });
     };
     draftFlush = function () { saveDraft(true); };
 
-    const markDirty = function () { dirty = true; };
+    saveBtn.addEventListener("click", function () {
+      saveBtn.disabled = true;
+      saveBtn.textContent = "存中…";
+      hint("正在存草稿", "");
+      saveDraft(true).then(function () {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "存草稿";
+      });
+    });
+
+    const markDirty = function () {
+      if (dirty) return;
+      dirty = true;
+      hint("有改动，还没存", "dirty");
+    };
     writer.element.addEventListener("input", markDirty);
     ["input", "change"].forEach(function (ev) { form.addEventListener(ev, markDirty); });
 
@@ -383,8 +412,8 @@
     document.addEventListener("visibilitychange", onHide);
     window.addEventListener("pagehide", function () { saveDraft(true); }, { once: true });
 
-    if (draft && draftHint) {
-      draftHint.textContent = "已恢复草稿";
+    if (draft) {
+      hint("上次保存 " + hhmm(draft.updatedAt), "ok");
       const drop = document.createElement("button");
       drop.type = "button";
       drop.className = "desk__btn";
@@ -396,7 +425,9 @@
         showDesk();
         await load();
       });
-      form.querySelector(".sheet__bar-side").prepend(drop);
+      side.prepend(drop);
+    } else {
+      hint("还没存过草稿", "");
     }
     form.querySelector("[data-back]").addEventListener("click", function () {
       if (JSON.stringify(payload()) !== started && !confirm("离开这页？写好的内容会丢掉。")) return;
