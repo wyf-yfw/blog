@@ -817,6 +817,57 @@
     section.replaceChildren(total, hint, list);
   }
 
+  function renderStars() {
+    const section = document.querySelector('[data-panel="stars"]');
+    if (!section) return;
+
+    const paint = function (data) {
+      const when = data && data.syncedAt ? new Date(data.syncedAt) : null;
+      const stamp = when && !Number.isNaN(when.getTime())
+        ? new Intl.DateTimeFormat('zh-CN', {
+            timeZone: 'Asia/Shanghai', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', hour12: false
+          }).format(when)
+        : '还没同步过';
+      const count = (data && data.items) ? data.items.length : 0;
+      const bad = data && data.ok === false;
+      section.innerHTML = ''
+        + '<p class="desk__hint" data-star-state>上次同步：' + stamp + ' · 共 ' + count + ' 个'
+        + (bad && data.message ? ' · ' + escapeHtml(data.message) : '') + '</p>'
+        + '<p class="desk__form-actions"></p>';
+      const actions = section.querySelector('.desk__form-actions');
+      actions.append(refreshBtn);
+      if (bad) section.querySelector('[data-star-state]').dataset.tone = 'bad';
+    };
+
+    const refreshBtn = document.createElement('button');
+    refreshBtn.type = 'button';
+    refreshBtn.className = 'desk__btn';
+    refreshBtn.textContent = '立即同步';
+    refreshBtn.addEventListener('click', async function () {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = '同步中…';
+      try {
+        const out = await send('/api/admin/stars/sync', { method: 'POST' });
+        renderStars();
+        deskStatus.textContent = '已同步 ' + out.count + ' 个';
+      } catch (err) {
+        deskStatus.textContent = err.message;
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = '立即同步';
+      }
+    });
+
+    send('/api/stars').then(paint).catch(function () {
+      section.innerHTML = '<p class="desk__hint">读不到同步状态</p>';
+    });
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
   async function load() {
     const site = await send("/api/site");
     const book = await send("/api/guestbook");
@@ -839,6 +890,7 @@
       await load();
     });
     renderViews(site);
+    renderStars();
     showTab(currentTab);
   }
 
