@@ -1,0 +1,43 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 同一时间只跑一个部署，后推的覆盖前一个
+concurrency:
+  group: deploy-kriswang
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 跑测试
+        run: npm test
+
+      - name: 检查有没有 Cloudflare 令牌
+        id: token
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN == '' }}
+        run: |
+          echo "::notice title=跳过部署::还没有配置 CLOUDFLARE_API_TOKEN，这次只跑了测试。"
+          echo "skip=true" >> "$GITHUB_OUTPUT"
+
+      - name: 部署到 Cloudflare
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: 6f6313228c73cdb5db875d457647bb2e
+          command: deploy

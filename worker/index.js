@@ -11,7 +11,7 @@ export default {
     const path = url.pathname.replace(/\/+$/, "") || "/";
     try {
       if (path === "/api/site") return await handleSite(request, env);
-      if (path === "/api/guestbook" || path === "/.netlify/functions/guestbook" || path === "/.netlify/functions/guestbook-list") {
+      if (path === "/api/guestbook") {
         return await handleGuestbook(request, env);
       }
       if (path === "/api/view") return await handleView(request, env);
