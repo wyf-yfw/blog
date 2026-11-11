@@ -931,7 +931,7 @@
     const text = document.createElement("input");
     text.type = "text";
     text.maxLength = 80;
-    text.placeholder = "今年想做成的事";
+    text.placeholder = "写一条目标";
     text.value = (item && item.text) || "";
     const del = textButton("去掉", true);
     del.addEventListener("click", function () { row.remove(); });
