@@ -1,6 +1,6 @@
 import { httpError } from "./http.js";
 
-const CATS = ["学记", "省察", "所见", "存档"];
+export const CATS = ["学记", "省察", "所见", "存档"];
 const PER_MINUTE = 400;
 
 export function readingMinutes(text) {

@@ -4,6 +4,9 @@
   const CATS = ["学记", "省察", "所见", "存档"];
   const loginForm = document.querySelector("[data-login]");
   const loginStatus = document.querySelector("[data-login-status]");
+  let draftTimer = 0;
+  let draftFlush = null;
+
   const desk = document.querySelector("[data-desk]");
   const deskStatus = document.querySelector("[data-desk-status]");
   const aboutForm = document.querySelector("[data-about]");
@@ -247,6 +250,11 @@
   }
 
   function closeSheet() {
+    clearInterval(draftTimer);
+    draftTimer = 0;
+    const flush = draftFlush;
+    draftFlush = null;
+    if (typeof flush === "function") flush();
     const sheet = document.querySelector("[data-sheet]");
     if (sheet) {
       sheet.hidden = true;
@@ -255,14 +263,21 @@
     document.body.classList.remove("is-sheet");
   }
 
-  function openSheet(item) {
+  async function openSheet(item) {
     const sheet = document.querySelector("[data-sheet]");
+    const draftKey = item ? item.id : "new";
+    let draft = null;
+    try {
+      const all = await send("/api/admin/drafts");
+      draft = (all.items || []).find(function (d) { return d.key === draftKey; }) || null;
+    } catch (err) { /* 取不到草稿不影响写作 */ }
+
     desk.hidden = true;
     sheet.hidden = false;
     document.body.classList.add("is-sheet");
     const form = document.createElement("form");
     form.className = "sheet__form";
-    form.innerHTML = '<div class="sheet__bar"><button type="button" class="desk__btn" data-back>返回</button><p class="desk__hint" data-pace></p><div class="sheet__bar-side"></div></div>'
+    form.innerHTML = '<div class="sheet__bar"><button type="button" class="desk__btn" data-back>返回</button><p class="desk__hint" data-pace></p><p class="desk__hint desk__draft" data-draft></p><div class="sheet__bar-side"></div></div>'
       + '<input class="sheet__title" name="title" placeholder="标题" required>'
       + '<div class="sheet__meta">'
       + '<label>日期 <input name="date" type="date" required></label>'
@@ -273,14 +288,21 @@
       + '<label>摘要 <input name="excerpt" maxlength="200" placeholder="可以空着"></label>'
       + "</div>"
       + '<textarea name="body" hidden></textarea>';
-    if (item) {
+    const seed = draft || item || null;
+    if (draft) {
+      form.title.value = draft.title || "";
+      form.excerpt.value = draft.excerpt || "";
+      form.category.value = draft.category || "学记";
+      form.tags.value = (draft.tags || []).join(" ");
+      form.body.value = draft.body || "";
+    } else if (item) {
       form.title.value = item.title || "";
       form.excerpt.value = item.excerpt || "";
       form.category.value = item.category || "学记";
       form.tags.value = (item.tags || []).join(" ");
       form.body.value = item.body || "";
     }
-    applyDate(form, item);
+    applyDate(form, seed);
     const source = form.querySelector("textarea");
     const writer = mountWriter(source);
     writer.element.classList.add("sheet__page");
@@ -321,6 +343,61 @@
       };
     }
     const started = JSON.stringify(payload());
+
+    /* ---------- 草稿：每 30 秒存一次，返回/刷新前再补存一次 ---------- */
+    const draftHint = form.querySelector("[data-draft]");
+    let dirty = false;
+
+    const clock = function () {
+      return new Intl.DateTimeFormat("zh-CN", {
+        timeZone: "Asia/Shanghai", hour: "2-digit", minute: "2-digit", hour12: false
+      }).format(new Date());
+    };
+
+    const saveDraft = function (silent) {
+      const data = payload();
+      if (!dirty && !silent) return Promise.resolve();
+      return send("/api/admin/drafts/" + encodeURIComponent(draftKey), {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(data),
+        keepalive: true
+      }).then(function () {
+        dirty = false;
+        if (draftHint) draftHint.textContent = "草稿 " + clock();
+      }).catch(function () {
+        if (draftHint) draftHint.textContent = "草稿没存上";
+      });
+    };
+    draftFlush = function () { saveDraft(true); };
+
+    const markDirty = function () { dirty = true; };
+    writer.element.addEventListener("input", markDirty);
+    ["input", "change"].forEach(function (ev) { form.addEventListener(ev, markDirty); });
+
+    clearInterval(draftTimer);
+    draftTimer = setInterval(saveDraft, 30000);
+
+    // 切走标签页/最小化时补存一次，比等 30 秒可靠
+    const onHide = function () { if (document.hidden) saveDraft(true); };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", function () { saveDraft(true); }, { once: true });
+
+    if (draft && draftHint) {
+      draftHint.textContent = "已恢复草稿";
+      const drop = document.createElement("button");
+      drop.type = "button";
+      drop.className = "desk__btn";
+      drop.textContent = "丢弃草稿";
+      drop.addEventListener("click", async function () {
+        if (!confirm("丢弃这份草稿？")) return;
+        await send("/api/admin/drafts/" + encodeURIComponent(draftKey), { method: "DELETE" });
+        closeSheet();
+        showDesk();
+        await load();
+      });
+      form.querySelector(".sheet__bar-side").prepend(drop);
+    }
     form.querySelector("[data-back]").addEventListener("click", function () {
       if (JSON.stringify(payload()) !== started && !confirm("离开这页？写好的内容会丢掉。")) return;
       closeSheet();
@@ -335,6 +412,11 @@
           headers: { "content-type": "application/json" },
           body: JSON.stringify(body)
         });
+        dirty = false;
+        clearInterval(draftTimer);
+        draftTimer = 0;
+        draftFlush = null;
+        await send("/api/admin/drafts/" + encodeURIComponent(draftKey), { method: "DELETE" }).catch(function () {});
         closeSheet();
         showDesk();
         deskStatus.textContent = "已经生效";
@@ -444,8 +526,25 @@
     return add;
   }
 
-  function renderArticles(items) {
+  function renderArticles(items, drafts) {
     const section = document.querySelector("[data-articles]");
+    const draftRows = (drafts || []).map(function (d) {
+      const label = d.title ? "草稿 · " + d.title : "草稿 · 还没起标题";
+      const made = makeRow(whenOf(d.updatedAt.slice(0, 10)), label);
+      const go = textButton("继续写");
+      go.addEventListener("click", function () {
+        const target = d.key === "new" ? null : items.find(function (a) { return a.id === d.key; }) || null;
+        openSheet(target);
+      });
+      const drop = textButton("丢弃", true);
+      drop.addEventListener("click", async function () {
+        if (!confirm("丢弃这份草稿？")) return;
+        await send("/api/admin/drafts/" + encodeURIComponent(d.key), { method: "DELETE" });
+        await load();
+      });
+      made.ops.append(go, drop);
+      return made.el;
+    });
     const rows = items.map(function (item) {
       const made = makeRow(whenOf(item.date), item.title);
       const edit = textButton("编辑");
@@ -460,7 +559,7 @@
       made.ops.append(edit, del);
       return made.el;
     });
-    const add = renderRows(section, "文章", rows);
+    const add = renderRows(section, "文章", draftRows.concat(rows));
     add.addEventListener("click", function () { openSheet(null); });
   }
 
@@ -690,7 +789,8 @@
   async function load() {
     const site = await send("/api/site");
     const book = await send("/api/guestbook");
-    renderArticles(site.articles || []);
+    const drafts = await send("/api/admin/drafts").catch(function () { return { items: [] }; });
+    renderArticles(site.articles || [], drafts.items || []);
     renderNotes(site.notes || []);
     aboutForm.paragraphs.value = ((site.about && site.about.paragraphs) || []).join("\n\n");
     renderPlain(document.querySelector("[data-timeline]"), "时间线", site.timeline || [], function (item) {

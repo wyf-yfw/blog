@@ -1,3 +1,4 @@
+import { handleDrafts } from "./drafts.js";
 import { json, readJson } from "./http.js";
 import { newId } from "./ids.js";
 import { shanghaiNow } from "./time.js";
@@ -10,6 +11,12 @@ function idFrom(path, prefix) {
 
 export async function handleContent(request, env, session) {
   const path = new URL(request.url).pathname;
+
+  if (path.startsWith("/api/admin/drafts")) {
+    const draft = await handleDrafts(request, env, new Date());
+    if (draft) return draft;
+  }
+
   const now = new Date();
   const today = shanghaiNow(now).date;
   const db = env.DB;
