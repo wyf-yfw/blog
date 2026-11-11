@@ -1,4 +1,5 @@
 import { handleContent } from "./admin-content.js";
+import { handleUsage } from "./usage.js";
 import { clientIp, sha256Hex } from "./guestbook.js";
 import { fail, httpError, json, readJson } from "./http.js";
 import { verifyPassword } from "./password.js";
@@ -100,6 +101,9 @@ export async function handleAdmin(request, env) {
   }
 
   const session = await requireSession(request, env, now);
+  if (path === "/api/admin/usage" && request.method === "GET") {
+    return withSession(await handleUsage(env, now), session);
+  }
   const content = await handleContent(request, env, session);
   if (content) return withSession(content, session);
 

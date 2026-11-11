@@ -3,14 +3,18 @@ import { handleGuestbook } from "./guestbook.js";
 import { fail } from "./http.js";
 import { handleMedia, handleUpload } from "./media.js";
 import { handleSite } from "./site.js";
+import { handleView } from "./views.js";
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const path = url.pathname;
+    const path = url.pathname.replace(/\/+$/, "") || "/";
     try {
       if (path === "/api/site") return await handleSite(request, env);
-      if (path === "/api/guestbook") return await handleGuestbook(request, env);
+      if (path === "/api/guestbook" || path === "/.netlify/functions/guestbook" || path === "/.netlify/functions/guestbook-list") {
+        return await handleGuestbook(request, env);
+      }
+      if (path === "/api/view") return await handleView(request, env);
       if (path === "/api/admin/media" && request.method === "POST") return await handleUpload(request, env);
       if (path.startsWith("/api/admin/")) return await handleAdmin(request, env);
       if (path.startsWith("/media/")) return await handleMedia(request, env);

@@ -257,6 +257,7 @@
 
   /* ---------- 手记 ---------- */
   let notesTag = '';
+  let notesTagsOpen = false;
 
   function noteTagsHtml(tags, clickable) {
     const list = (tags || []).filter(Boolean);
@@ -296,7 +297,9 @@
       const on = (value === '' && !notesTag) || (value !== '' && notesTag === value);
       return `<button type="button" class="ntag${on ? ' is-on' : ''}" data-tag="${esc(value)}">${esc(label)}</button>`;
     };
-    bar.innerHTML = chip('全部', '') + tags.map((t) => chip(t, t)).join('');
+    const current = !notesTagsOpen && notesTag ? chip(notesTag, notesTag) : '';
+    const more = `<button type="button" class="ntags__more" aria-expanded="${notesTagsOpen ? 'true' : 'false'}" aria-label="${notesTagsOpen ? '收起标签' : '展开标签'}"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.2 2.4 8 6l-3.8 3.6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
+    bar.innerHTML = `<div class="ntags__bar">${chip('全部', '')}${current}${more}</div><div class="ntags__pop"${notesTagsOpen ? '' : ' hidden'}>${tags.map((t) => chip(t, t)).join('')}</div>`;
     bar.hidden = false;
   }
 
@@ -334,17 +337,31 @@
 
   document.addEventListener('click', (e) => {
     if (document.body.dataset.page !== 'notes') return;
+    if (e.target.closest('.ntags__more')) {
+      e.preventDefault();
+      notesTagsOpen = !notesTagsOpen;
+      renderNotes(window.KRIS_DATA || { notes: [] });
+      return;
+    }
     const btn = e.target.closest('.ntag[data-tag], .note__tag[data-tag]');
-    if (!btn) return;
-    e.preventDefault();
-    notesTag = btn.getAttribute('data-tag') || '';
-    renderNotes(window.KRIS_DATA || { notes: [] });
+    if (btn) {
+      e.preventDefault();
+      notesTag = btn.getAttribute('data-tag') || '';
+      renderNotes(window.KRIS_DATA || { notes: [] });
+      return;
+    }
+    if (notesTagsOpen && !e.target.closest('.ntags')) {
+      notesTagsOpen = false;
+      renderNotes(window.KRIS_DATA || { notes: [] });
+    }
   });
 
   /* ---------- 关于 ---------- */
   function renderAbout(data) {
     const ps = (data.about && data.about.paragraphs) || [];
-    setList('[data-slot="about"]', ps.map((t) => '<p>' + inline(t) + '</p>').join(''));
+    const views = Math.max(0, Number(data.views) || 0);
+    setList('[data-slot="about"]', ps.map((t) => '<p>' + inline(t) + '</p>').join('')
+      + '<p class="intro__views">' + views + ' 次浏览</p>');
   }
 
   /* ---------- 时间线：最新在最上 ---------- */
@@ -384,6 +401,7 @@
     if (meta && art.excerpt) meta.setAttribute('content', art.excerpt);
 
     const metaBits = [MONTH(art.date).full]
+      .concat((Math.max(0, Number(art.views) || 0)) + ' 次浏览')
       .concat(art.minutes ? art.minutes + ' 分钟读完' : [])
       .concat(art.category || [])
       .concat(art.tags || [])
@@ -536,19 +554,77 @@
     main.prepend(p);
   }
 
+  async function recordView() {
+    const page = document.body.dataset.page || "";
+    if (!/^(index|writing|notes|about|timeline|guestbook|post)$/.test(page)) return;
+    let visitor = "";
+    try {
+      visitor = localStorage.getItem("kris-visitor") || "";
+      if (!/^[\w-]{16,80}$/.test(visitor)) {
+        const bytes = crypto.getRandomValues(new Uint8Array(18));
+        let raw = "";
+        for (let i = 0; i < bytes.length; i += 1) raw += String.fromCharCode(bytes[i]);
+        visitor = btoa(raw).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+        localStorage.setItem("kris-visitor", visitor);
+      }
+    } catch (e) {
+      return;
+    }
+    const payload = { page: page, visitor: visitor };
+    if (page === "post") payload.id = new URLSearchParams(location.search).get("p") || "";
+    try {
+      await fetch("/api/view", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      });
+    } catch (e) { /* 计数失败时页面照常显示 */ }
+  }
+
+  const SITE_CACHE = "kris-site-v1";
+
+  function readSiteCache() {
+    try {
+      const data = JSON.parse(sessionStorage.getItem(SITE_CACHE) || "");
+      if (!data || typeof data !== "object" || !Array.isArray(data.articles) || !Array.isArray(data.notes)) return null;
+      if (!Array.isArray(data.timeline)) data.timeline = [];
+      return data;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeSiteCache(data) {
+    try { sessionStorage.setItem(SITE_CACHE, JSON.stringify(data)); } catch (e) { /* 配额满了就下次再存 */ }
+  }
+
+  function remember(data) {
+    if (!Array.isArray(data.timeline)) data.timeline = [];
+    writeSiteCache(data);
+    const next = dataFingerprint(data);
+    if (!next || next === lastFingerprint) return;
+    lastFingerprint = next;
+    apply(data);
+  }
+
   async function start() {
+    const cached = readSiteCache();
+    if (cached) {
+      lastFingerprint = dataFingerprint(cached);
+      apply(cached);
+    }
+    await recordView();
     try {
       const res = await fetch(API.dataUrl(), { cache: "no-store" });
       if (!res.ok) {
-        showLoadError();
+        if (!cached) showLoadError();
         return;
       }
-      const data = await res.json();
-      if (!Array.isArray(data.timeline)) data.timeline = [];
-      lastFingerprint = dataFingerprint(data);
-      apply(data);
+      remember(await res.json());
     } catch (e) {
-      showLoadError();
+      if (!cached) showLoadError();
     }
   }
 
@@ -558,12 +634,7 @@
     try {
       const res = await fetch(API.dataUrl(), { cache: 'no-store' });
       if (!res.ok) return;
-      const data = await res.json();
-      if (!Array.isArray(data.timeline)) data.timeline = [];
-      const next = dataFingerprint(data);
-      if (!next || next === lastFingerprint) return;
-      lastFingerprint = next;
-      apply(data);
+      remember(await res.json());
     } catch (e) { /* 忽略瞬时网络错误 */ }
   }
 

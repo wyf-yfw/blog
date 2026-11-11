@@ -14,6 +14,7 @@ test("空库返回空集合", async () => {
     articles: [],
     notes: [],
     timeline: [],
+    views: 0,
   });
 });
 
@@ -40,4 +41,24 @@ test("读出文章、手记、关于和时间线", async () => {
   });
   expect(body.notes[0]).toMatchObject({ id: "n1", text: "一句", tags: [] });
   expect(body.timeline[0]).toEqual({ id: "t1", date: "2026-11-09 16:50", text: "记了一笔", kind: "note" });
+});
+
+test("文章和手记最新的排在前面", async () => {
+  const insertArticle = (id, date, created) => env.DB.prepare(
+    `INSERT INTO articles
+      (id, date, title, excerpt, category, tags, minutes, body, created_at, updated_at)
+     VALUES (?, ?, ?, '', '学记', '[]', 1, '', ?, ?)`
+  ).bind(id, date, id, created, created).run();
+  const insertNote = (id, date, created) => env.DB.prepare(
+    "INSERT INTO notes (id, date, text, tags, created_at, updated_at) VALUES (?, ?, ?, '[]', ?, ?)"
+  ).bind(id, date, id, created, created).run();
+  await insertArticle("old", "2026-11-09", "2026-11-09T01:00:00.000Z");
+  await insertArticle("same-early", "2026-11-10", "2026-11-10T01:00:00.000Z");
+  await insertArticle("same-late", "2026-11-10", "2026-11-10T09:00:00.000Z");
+  await insertNote("old", "2026-11-09", "2026-11-09T01:00:00.000Z");
+  await insertNote("same-early", "2026-11-10", "2026-11-10T01:00:00.000Z");
+  await insertNote("same-late", "2026-11-10", "2026-11-10T09:00:00.000Z");
+  const body = await (await worker.fetch(new Request("https://kris.test/api/site"), env)).json();
+  expect(body.articles.map((item) => item.id)).toEqual(["same-late", "same-early", "old"]);
+  expect(body.notes.map((item) => item.id)).toEqual(["same-late", "same-early", "old"]);
 });

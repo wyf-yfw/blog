@@ -2,74 +2,63 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<script>
-document.documentElement.classList.add("js");
-(function () {
-  var KEY = "kris-build";
-  function check() {
-    fetch("version.json?t=" + Date.now(), { cache: "no-store" })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) {
-        if (!d || !d.v) return;
-        var prev = localStorage.getItem(KEY);
-        if (prev && prev !== String(d.v)) {
-          localStorage.setItem(KEY, String(d.v));
-          location.reload();
-          return;
-        }
-        localStorage.setItem(KEY, String(d.v));
-      })
-      .catch(function () {});
-  }
-  check();
-  document.addEventListener("visibilitychange", function () {
-    if (!document.hidden) check();
-  });
-  window.addEventListener("focus", check);
-})();
-</script>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
+<script>document.documentElement.classList.add("js")</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>后台 — Kris</title>
 <meta name="description" content="Kris 的后台。">
 <meta name="theme-color" content="#f1efea">
 
-<link rel="icon" href="assets/img/avatar.svg">
+<link rel="icon" href="assets/img/avatar.svg?v=20261110r">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,300..600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20261110c">
+<link rel="stylesheet" href="assets/css/style.css?v=20261111c">
 </head>
-<body>
+<body data-page="admin">
 <main id="main">
   <div class="wrap">
-    <div class="page-head">
+    <div class="page-head desk__top">
       <h1 class="page-head__title">后台</h1>
       <p class="page-head__desc"><a href="index.html">回首页</a></p>
     </div>
-    <form class="adm__form" data-login hidden>
+    <form class="adm__form desk__login" data-login hidden>
       <label>用户名 <input name="username" autocomplete="username" required></label>
       <label>密码 <input name="password" type="password" autocomplete="current-password" required></label>
       <button class="gb__submit" type="submit">登录</button>
       <p class="gb__status" data-login-status role="status"></p>
     </form>
     <div data-desk hidden>
-      <p class="gb__actions"><button type="button" data-logout>退出</button><span data-desk-status role="status"></span></p>
-      <section data-articles></section>
-      <section data-notes></section>
-      <section>
-        <h2>关于</h2>
+      <div class="desk__bar">
+        <div class="desk__tabs" role="tablist" aria-label="后台栏目">
+          <button type="button" role="tab" data-tab="articles" aria-selected="true">文章</button>
+          <button type="button" role="tab" data-tab="notes" aria-selected="false">手记</button>
+          <button type="button" role="tab" data-tab="about" aria-selected="false">关于</button>
+          <button type="button" role="tab" data-tab="timeline" aria-selected="false">时间线</button>
+          <button type="button" role="tab" data-tab="guestbook" aria-selected="false">留言</button>
+          <button type="button" role="tab" data-tab="views" aria-selected="false">浏览</button>
+          <button type="button" role="tab" data-tab="quota" aria-selected="false">额度</button>
+        </div>
+        <div class="desk__bar-side">
+          <span data-desk-status role="status"></span>
+          <button type="button" class="desk__btn" data-logout>退出</button>
+        </div>
+      </div>
+      <section data-articles data-panel="articles"></section>
+      <section data-notes data-panel="notes" hidden></section>
+      <section class="desk__sec" data-panel="about" hidden>
         <form class="adm__form" data-about>
-          <textarea name="paragraphs" rows="8"></textarea>
+          <label>段落之间空一行 <textarea name="paragraphs" rows="8"></textarea></label>
           <button class="gb__submit" type="submit">保存关于</button>
         </form>
       </section>
-      <section data-timeline></section>
-      <section data-guestbook></section>
+      <section data-timeline data-panel="timeline" hidden></section>
+      <section data-guestbook data-panel="guestbook" hidden></section>
+      <section data-views data-panel="views" hidden></section>
+      <section class="desk__sec" data-quota data-panel="quota" hidden></section>
     </div>
+    <div class="sheet" data-sheet hidden></div>
   </div>
 </main>
-<script src="assets/js/admin-app.js?v=20261110d"></script>
+<script src="assets/js/admin-app.js?v=20261111c"></script>
 </body>
 </html>

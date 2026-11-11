@@ -4,12 +4,18 @@ import { aboutInput, articleInput, noteInput } from "../worker/validate.js";
 
 const today = "2026-11-10";
 
-test("文章缺标题、坏类别、超长摘要、坏日期、坏分钟会被拒绝", () => {
+test("文章缺标题、坏类别、超长摘要、坏日期会被拒绝", () => {
   expect(() => articleInput({ title: "  " }, today)).toThrowError(expect.objectContaining({ hint: "标题要填" }));
   expect(() => articleInput({ title: "题", category: "别的" }, today)).toThrowError(expect.objectContaining({ hint: "类别不对" }));
   expect(() => articleInput({ title: "题", excerpt: "x".repeat(201) }, today)).toThrowError(expect.objectContaining({ hint: "摘要太长了" }));
   expect(() => articleInput({ title: "题", date: "2026-13-40" }, today)).toThrowError(expect.objectContaining({ hint: "日期格式不对" }));
-  expect(() => articleInput({ title: "题", minutes: 0 }, today)).toThrowError(expect.objectContaining({ hint: "阅读分钟不对" }));
+});
+
+test("阅读时长按正文每 400 字一分钟，图片不算", () => {
+  expect(articleInput({ title: "题", minutes: 9, body: "" }, today).minutes).toBe(null);
+  expect(articleInput({ title: "题", body: "字".repeat(400) }, today).minutes).toBe(1);
+  expect(articleInput({ title: "题", body: "字".repeat(401) + "\n\n![图](/media/a.png)" }, today).minutes).toBe(2);
+  expect(articleInput({ title: "题", body: "字".repeat(400 * 99 + 1) }, today).minutes).toBe(99);
 });
 
 test("合法文章补上当天日期和默认类别", () => {

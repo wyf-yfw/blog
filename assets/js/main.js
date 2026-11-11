@@ -240,6 +240,10 @@
     let tx = 0, ty = 0, x = 0, y = 0, raf = 0;
 
     function run() {
+      if (q.classList.contains('is-ink')) {
+        raf = 0;
+        return;
+      }
       x += (tx - x) * 0.08;
       y += (ty - y) * 0.08;
       q.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
@@ -251,6 +255,7 @@
     }
 
     hero.addEventListener('pointermove', (e) => {
+      if (q.classList.contains('is-ink')) return;
       if (e.pointerType !== 'mouse') return;
       const r = hero.getBoundingClientRect();
       const dx = (e.clientX - r.left) / r.width - 0.5;
@@ -261,6 +266,7 @@
     });
 
     hero.addEventListener('pointerleave', () => {
+      if (q.classList.contains('is-ink')) return;
       tx = 0; ty = 0;
       if (!raf) raf = requestAnimationFrame(run);
     });
@@ -522,13 +528,40 @@
     observeReveal();
   }
 
+  function prefetchPages() {
+    const seen = new Set();
+    const here = location.pathname + location.search;
+    document.querySelectorAll("a[href]").forEach((a) => {
+      let url;
+      try { url = new URL(a.href, location.href); } catch (err) { return; }
+      if (url.origin !== location.origin) return;
+      if (!/\.html$/i.test(url.pathname) && url.pathname !== "/") return;
+      if (url.pathname.endsWith("/admin.html")) return;
+      const href = url.pathname + url.search;
+      if (href === here || seen.has(href)) return;
+      seen.add(href);
+    });
+    const run = () => {
+      seen.forEach((href) => {
+        const link = document.createElement("link");
+        link.rel = "prefetch";
+        link.as = "document";
+        link.href = href;
+        document.head.appendChild(link);
+      });
+    };
+    if (window.requestIdleCallback) requestIdleCallback(run, { timeout: 1500 });
+    else setTimeout(run, 400);
+  }
+
   document.addEventListener('kris:rendered', () => { initPhotos(); markContent(); });
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { observeReveal(); initCursor(); initHeroParallax(); });
+    document.addEventListener('DOMContentLoaded', () => { observeReveal(); initCursor(); initHeroParallax(); prefetchPages(); });
   } else {
     observeReveal();
     initCursor();
     initHeroParallax();
+    prefetchPages();
   }
 
   // 没有 IntersectionObserver 或脚本报错时，别让内容一直隐身

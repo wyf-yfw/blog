@@ -1,0 +1,31 @@
+# 这些是页面壳。内容仍从 /api/site 来，所以壳可以短缓存。
+/
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400
+
+/index
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400
+
+/writing
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400
+
+/notes
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400
+
+/timeline
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400
+
+/guestbook
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400
+
+/about
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400
+
+/post
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400
+
+/admin
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400
+
+# 样式、脚本、图片的地址带 ?v=，改版本才会换新文件。
+/assets/*
+  Cache-Control: public, max-age=2592000

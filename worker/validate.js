@@ -1,6 +1,14 @@
 import { httpError } from "./http.js";
 
 const CATS = ["学记", "省察", "所见", "存档"];
+const PER_MINUTE = 400;
+
+export function readingMinutes(text) {
+  const plain = String(text || "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\s/g, "");
+  const count = Array.from(plain).length;
+  if (!count) return null;
+  return Math.min(99, Math.max(1, Math.ceil(count / PER_MINUTE)));
+}
 
 function isYmd(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -26,21 +34,13 @@ export function articleInput(body, today) {
   if (excerpt.length > 200) throw httpError(400, "invalid", "摘要太长了");
   const date = body.date ? String(body.date) : today;
   if (!isYmd(date)) throw httpError(400, "invalid", "日期格式不对");
-  let minutes = body.minutes;
-  if (minutes === "" || minutes == null) minutes = null;
-  else {
-    minutes = Number(minutes);
-    if (!Number.isInteger(minutes) || minutes < 1 || minutes > 99) {
-      throw httpError(400, "invalid", "阅读分钟不对");
-    }
-  }
   return {
     date,
     title,
     excerpt,
     category,
     tags: parseTags(body.tags),
-    minutes,
+    minutes: readingMinutes(body.body),
     body: body.body == null ? "" : String(body.body),
   };
 }
