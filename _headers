@@ -20,6 +20,9 @@
 /about
   Cache-Control: public, max-age=300, stale-while-revalidate=86400
 
+/stars
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400
+
 /post
   Cache-Control: public, max-age=300, stale-while-revalidate=86400
 

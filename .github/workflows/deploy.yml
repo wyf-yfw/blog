@@ -38,6 +38,14 @@ jobs:
       - name: 戳资源版本号
         run: node scripts/stamp-version.mjs "${GITHUB_SHA::8}"
 
+      - name: 应用数据库迁移
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
+          accountId: 6f6313228c73cdb5db875d457647bb2e
+          command: d1 migrations apply kris --remote
+
       - name: 部署到 Cloudflare
         if: env.CLOUDFLARE_API_TOKEN != ''
         uses: cloudflare/wrangler-action@v3

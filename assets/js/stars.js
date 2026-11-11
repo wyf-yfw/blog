@@ -70,9 +70,7 @@
       const data = res.ok ? await res.json() : {};
       all = Array.isArray(data.items) ? data.items : [];
       if (footEl && all.length) {
-        const bits = ["同步于 " + when(data.syncedAt), all.length + " 个"];
-        if (data.ok === false && data.message) bits.push(data.message);
-        footEl.textContent = bits.join(" · ");
+        footEl.textContent = "同步于 " + when(data.syncedAt) + " · " + all.length + " 个";
         footEl.hidden = false;
       }
       buildFilter();

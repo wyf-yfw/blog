@@ -71,6 +71,45 @@ describe("star 同步", () => {
     expect(body.items[0].language).toBe("");
   });
 
+  test("超过一页时把后面的页也收进来", async () => {
+    const page = (name) => [{ starred_at: "2026-11-01T10:00:00Z", repo: repo("o/" + name) }];
+    const first = Array.from({ length: 100 }, (_, i) => ({
+      starred_at: "2026-11-02T10:00:00Z",
+      repo: repo("o/p" + i),
+    }));
+    await syncStars(env, async (url) => {
+      const pageNo = new URL(url).searchParams.get("page");
+      const list = pageNo === "2" ? page("last") : first;
+      return new Response(JSON.stringify(list), { status: 200 });
+    });
+    const body = await (await handleStars(env)).json();
+    expect(body.items).toHaveLength(101);
+    expect(body.items.some((item) => item.repo === "o/last")).toBe(true);
+  });
+
+  test("后面的页失败时保留旧数据", async () => {
+    await syncStars(env, ok([{ starred_at: "2026-11-01T10:00:00Z", repo: repo("a/b") }]));
+    const first = Array.from({ length: 100 }, (_, i) => ({
+      starred_at: "2026-11-03T10:00:00Z",
+      repo: repo("n/" + i),
+    }));
+    await expect(syncStars(env, async (url) => {
+      const pageNo = new URL(url).searchParams.get("page");
+      if (pageNo === "2") return new Response("{}", { status: 502 });
+      return new Response(JSON.stringify(first), { status: 200 });
+    })).rejects.toThrow();
+    const body = await (await handleStars(env)).json();
+    expect(body.items.map((item) => item.repo)).toEqual(["a/b"]);
+    expect(body.ok).toBe(false);
+  });
+
+  test("GitHub 返回的不是列表时不把已有数据清掉", async () => {
+    await syncStars(env, ok([{ starred_at: "2026-11-01T10:00:00Z", repo: repo("a/b") }]));
+    await expect(syncStars(env, async () => new Response(JSON.stringify({ message: "nope" }), { status: 200 }))).rejects.toThrow();
+    const body = await (await handleStars(env)).json();
+    expect(body.items.map((item) => item.repo)).toEqual(["a/b"]);
+  });
+
   test("没有 starred_at 时用同步时间兜底，不抛错", async () => {
     await syncStars(env, ok([repo("x/y")]));   // 裸 repo 数组，兼容模式
     const body = await (await handleStars(env)).json();

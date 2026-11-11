@@ -2,8 +2,10 @@
 import { httpError, json } from "./http.js";
 
 const USER = "wyf-yfw";
+const PER_PAGE = 100;
+const MAX_PAGES = 20;
 const LIST_URL =
-  "https://api.github.com/users/" + USER + "/starred?per_page=100&sort=created&direction=desc";
+  "https://api.github.com/users/" + USER + "/starred?per_page=" + PER_PAGE + "&sort=created&direction=desc";
 
 function toStar(entry, fallbackAt) {
   const repo = (entry && entry.repo) || entry || {};
@@ -32,6 +34,19 @@ async function noteSync(env, ts, okFlag, message) {
   ).bind(ts, okFlag, message || "").run();
 }
 
+async function collectStars(fetchImpl, headers) {
+  const entries = [];
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const res = await fetchImpl(LIST_URL + "&page=" + page, { headers });
+    if (!res.ok) throw httpError(502, "github", "GitHub 返回 " + res.status);
+    const list = await res.json();
+    if (!Array.isArray(list)) throw httpError(502, "github", "GitHub 返回的不是列表");
+    entries.push(...list);
+    if (list.length < PER_PAGE) return entries;
+  }
+  throw httpError(502, "github", "收藏太多，这次没有全部同步");
+}
+
 export async function syncStars(env, fetchImpl = fetch) {
   const ts = new Date().toISOString();
   const headers = {
@@ -40,15 +55,17 @@ export async function syncStars(env, fetchImpl = fetch) {
   };
   if (env.GITHUB_TOKEN) headers.authorization = "Bearer " + env.GITHUB_TOKEN;
 
-  const res = await fetchImpl(LIST_URL, { headers });
-  if (!res.ok) {
-    const message = "GitHub 返回 " + res.status;
+  let entries;
+  try {
+    entries = await collectStars(fetchImpl, headers);
+  } catch (err) {
+    const message = (err && err.hint) || "同步时出错了";
     await noteSync(env, ts, 0, message);
+    if (err && err.status) throw err;
     throw httpError(502, "github", message);
   }
 
-  const list = await res.json();
-  const items = (Array.isArray(list) ? list : []).map((entry) => toStar(entry, ts));
+  const items = entries.map((entry) => toStar(entry, ts));
 
   const statements = [env.DB.prepare("DELETE FROM stars")];
   for (const item of items) {

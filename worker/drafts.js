@@ -71,7 +71,7 @@ export async function handleDrafts(request, env, now) {
 
   if (request.method === "GET") {
     const row = await env.DB.prepare("SELECT * FROM drafts WHERE draft_key = ?").bind(key).first();
-    return row ? json(shape(row)) : json({ error: "not_found" }, 404);
+    return row ? json(shape(row)) : json({ error: "not_found", hint: "没有这份草稿" }, 404);
   }
 
   if (request.method === "DELETE") {

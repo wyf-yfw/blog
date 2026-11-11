@@ -5,7 +5,10 @@
   const loginForm = document.querySelector("[data-login]");
   const loginStatus = document.querySelector("[data-login-status]");
   let draftTimer = 0;
-  let draftFlush = null;
+  let draftEpoch = 0;
+  let draftInFlight = null;
+  let onDraftHide = null;
+  let onDraftPageHide = null;
 
   const desk = document.querySelector("[data-desk]");
   const deskStatus = document.querySelector("[data-desk-status]");
@@ -250,11 +253,14 @@
   }
 
   function closeSheet() {
+    draftEpoch += 1;
     clearInterval(draftTimer);
     draftTimer = 0;
-    const flush = draftFlush;
-    draftFlush = null;
-    if (typeof flush === "function") flush();
+    draftInFlight = null;
+    if (onDraftHide) document.removeEventListener("visibilitychange", onDraftHide);
+    if (onDraftPageHide) window.removeEventListener("pagehide", onDraftPageHide);
+    onDraftHide = null;
+    onDraftPageHide = null;
     const sheet = document.querySelector("[data-sheet]");
     if (sheet) {
       sheet.hidden = true;
@@ -263,14 +269,25 @@
     document.body.classList.remove("is-sheet");
   }
 
-  async function openSheet(item) {
+  function freshDraftKey() {
+    return "new-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  async function openSheet(item, draftKey) {
     const sheet = document.querySelector("[data-sheet]");
-    const draftKey = item ? item.id : "new";
+    const key = draftKey || (item && item.id) || freshDraftKey();
     let draft = null;
     try {
-      const all = await send("/api/admin/drafts");
-      draft = (all.items || []).find(function (d) { return d.key === draftKey; }) || null;
-    } catch (err) { /* 取不到草稿不影响写作 */ }
+      draft = await send("/api/admin/drafts/" + encodeURIComponent(key));
+    } catch (err) {
+      if (err.message === "先登录") return;
+      if (err.message !== "没有这份草稿") {
+        deskStatus.textContent = err.message;
+        return;
+      }
+    }
+    closeSheet();
+    const epoch = draftEpoch;
 
     desk.hidden = true;
     sheet.hidden = false;
@@ -342,9 +359,7 @@
         body: form.body.value
       };
     }
-    const started = JSON.stringify(payload());
-
-    /* ---------- 草稿：每 30 秒存一次，返回/刷新前再补存一次 ---------- */
+    /* 草稿：改过才存。关掉页面不会再写回去。只有关浏览器时才用 keepalive。 */
     const draftHint = form.querySelector("[data-draft]");
     const side = form.querySelector(".sheet__bar-side");
     let dirty = false;
@@ -369,28 +384,33 @@
     saveBtn.textContent = "存草稿";
     side.prepend(saveBtn);
 
-    const saveDraft = function (silent) {
+    const saveDraft = function (force, keepalive) {
+      if (epoch !== draftEpoch) return Promise.resolve();
+      if (!dirty && !force) return Promise.resolve();
       const data = payload();
-      if (!dirty && !silent) return Promise.resolve();
-      return send("/api/admin/drafts/" + encodeURIComponent(draftKey), {
+      const options = {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(data),
-        keepalive: true
-      }).then(function () {
+        body: JSON.stringify(data)
+      };
+      if (keepalive) options.keepalive = true;
+      const pending = send("/api/admin/drafts/" + encodeURIComponent(key), options).then(function () {
+        if (epoch !== draftEpoch) return;
         dirty = false;
         hint("草稿已保存 " + hhmm(), "ok");
       }).catch(function () {
+        if (epoch !== draftEpoch) return;
         hint("草稿没存上", "bad");
       });
+      draftInFlight = pending;
+      return pending;
     };
-    draftFlush = function () { saveDraft(true); };
 
     saveBtn.addEventListener("click", function () {
       saveBtn.disabled = true;
       saveBtn.textContent = "存中…";
       hint("正在存草稿", "");
-      saveDraft(true).then(function () {
+      saveDraft(true, false).then(function () {
         saveBtn.disabled = false;
         saveBtn.textContent = "存草稿";
       });
@@ -405,12 +425,12 @@
     ["input", "change"].forEach(function (ev) { form.addEventListener(ev, markDirty); });
 
     clearInterval(draftTimer);
-    draftTimer = setInterval(saveDraft, 30000);
+    draftTimer = setInterval(function () { saveDraft(false, false); }, 30000);
 
-    // 切走标签页/最小化时补存一次，比等 30 秒可靠
-    const onHide = function () { if (document.hidden) saveDraft(true); };
-    document.addEventListener("visibilitychange", onHide);
-    window.addEventListener("pagehide", function () { saveDraft(true); }, { once: true });
+    onDraftHide = function () { if (document.hidden) saveDraft(false, false); };
+    onDraftPageHide = function () { saveDraft(false, true); };
+    document.addEventListener("visibilitychange", onDraftHide);
+    window.addEventListener("pagehide", onDraftPageHide);
 
     if (draft) {
       hint("上次保存 " + hhmm(draft.updatedAt), "ok");
@@ -420,35 +440,41 @@
       drop.textContent = "丢弃草稿";
       drop.addEventListener("click", async function () {
         if (!confirm("丢弃这份草稿？")) return;
-        await send("/api/admin/drafts/" + encodeURIComponent(draftKey), { method: "DELETE" });
+        const pending = draftInFlight;
         closeSheet();
-        showDesk();
-        await load();
+        try {
+          if (pending) await pending.catch(function () {});
+          await send("/api/admin/drafts/" + encodeURIComponent(key), { method: "DELETE" });
+          showDesk();
+          await load();
+        } catch (err) {
+          if (err.message !== "先登录") deskStatus.textContent = err.message;
+        }
       });
       side.prepend(drop);
     } else {
       hint("还没存过草稿", "");
     }
-    form.querySelector("[data-back]").addEventListener("click", function () {
-      if (JSON.stringify(payload()) !== started && !confirm("离开这页？写好的内容会丢掉。")) return;
+    form.querySelector("[data-back]").addEventListener("click", async function () {
+      if (dirty && !confirm("离开这页？还没存上的改动会丢掉。")) return;
       closeSheet();
       showDesk();
+      await load();
     });
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
       const body = payload();
+      const editing = item && item.id ? item : null;
       try {
-        await send(item ? "/api/admin/articles/" + item.id : "/api/admin/articles", {
-          method: item ? "PUT" : "POST",
+        await send(editing ? "/api/admin/articles/" + editing.id : "/api/admin/articles", {
+          method: editing ? "PUT" : "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify(body)
         });
-        dirty = false;
-        clearInterval(draftTimer);
-        draftTimer = 0;
-        draftFlush = null;
-        await send("/api/admin/drafts/" + encodeURIComponent(draftKey), { method: "DELETE" }).catch(function () {});
+        const pending = draftInFlight;
         closeSheet();
+        if (pending) await pending.catch(function () {});
+        await send("/api/admin/drafts/" + encodeURIComponent(key), { method: "DELETE" }).catch(function () {});
         showDesk();
         deskStatus.textContent = "已经生效";
         await load();
@@ -457,7 +483,7 @@
       }
     });
     sheet.replaceChildren(form);
-    (item ? first : form.title).focus();
+    ((draft || item) ? first : form.title).focus();
   }
 
   function openEditor(section, item) {
@@ -564,8 +590,8 @@
       const made = makeRow(whenOf(d.updatedAt.slice(0, 10)), label);
       const go = textButton("继续写");
       go.addEventListener("click", function () {
-        const target = d.key === "new" ? null : items.find(function (a) { return a.id === d.key; }) || null;
-        openSheet(target);
+        const article = items.find(function (a) { return a.id === d.key; }) || null;
+        openSheet(article, d.key);
       });
       const drop = textButton("丢弃", true);
       drop.addEventListener("click", async function () {

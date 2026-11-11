@@ -64,6 +64,24 @@ test("草稿不会出现在公开内容里", async () => {
   expect(site.articles).toHaveLength(0);
 });
 
+test("删除文章时一并删掉它的草稿，别的草稿还在", async () => {
+  const created = await call("/api/admin/articles", {
+    method: "POST",
+    body: { title: "已发布", body: "正文" },
+  });
+  const id = (await created.json()).id;
+  await call("/api/admin/drafts/" + id, { method: "PUT", body: { title: "改到一半", body: "草稿" } });
+  await call("/api/admin/drafts/new-other", { method: "PUT", body: { title: "另一篇", body: "留着" } });
+
+  const removed = await call("/api/admin/articles/" + id, { method: "DELETE" });
+  expect(removed.status).toBe(200);
+
+  const gone = await call("/api/admin/drafts/" + id);
+  expect(gone.status).toBe(404);
+  const { items } = await (await call("/api/admin/drafts")).json();
+  expect(items.map((item) => item.key)).toEqual(["new-other"]);
+});
+
 test("删掉草稿就没了", async () => {
   await call("/api/admin/drafts/new", { method: "PUT", body: { title: "临时" } });
   const del = await call("/api/admin/drafts/new", { method: "DELETE" });
