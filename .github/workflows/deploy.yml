@@ -35,6 +35,9 @@ jobs:
           echo "::notice title=跳过部署::仓库里还没有配置 CLOUDFLARE_API_TOKEN，这次只跑了测试。"
           echo "配置方法：Settings → Secrets and variables → Actions → New repository secret"
 
+      - name: 戳资源版本号
+        run: node scripts/stamp-version.mjs "${GITHUB_SHA::8}"
+
       - name: 部署到 Cloudflare
         if: env.CLOUDFLARE_API_TOKEN != ''
         uses: cloudflare/wrangler-action@v3
