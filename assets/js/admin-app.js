@@ -41,6 +41,60 @@
     return String(value || "").split(/[,，\s]+/).map(function (t) { return t.trim(); }).filter(Boolean);
   }
 
+  let knownTags = [];
+
+  function rememberTags(groups) {
+    const seen = [];
+    (groups || []).forEach(function (list) {
+      (list || []).forEach(function (item) {
+        (item.tags || []).forEach(function (tag) {
+          const text = String(tag || "").trim();
+          if (text && seen.indexOf(text) < 0) seen.push(text);
+        });
+      });
+    });
+    knownTags = seen;
+  }
+
+  function chosenTags(value) {
+    const out = [];
+    splitTags(value).forEach(function (tag) {
+      if (out.indexOf(tag) < 0) out.push(tag);
+    });
+    return out;
+  }
+
+  function mountTagPicks(input) {
+    if (!input || !knownTags.length) return;
+    const picks = document.createElement("span");
+    picks.className = "tag-picks";
+    function paint() {
+      const have = chosenTags(input.value);
+      picks.replaceChildren();
+      knownTags.forEach(function (tag) {
+        const on = have.indexOf(tag) >= 0;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "tag-pick" + (on ? " is-on" : "");
+        btn.textContent = tag;
+        btn.setAttribute("aria-pressed", on ? "true" : "false");
+        btn.setAttribute("aria-label", (on ? "去掉" : "加上") + tag);
+        btn.addEventListener("click", function () {
+          const now = chosenTags(input.value);
+          const at = now.indexOf(tag);
+          if (at >= 0) now.splice(at, 1);
+          else now.push(tag);
+          input.value = now.join(" ");
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        });
+        picks.appendChild(btn);
+      });
+    }
+    input.addEventListener("input", paint);
+    input.insertAdjacentElement("afterend", picks);
+    paint();
+  }
+
   function field(label, html) {
     return "<label>" + label + html + "</label>";
   }
@@ -301,7 +355,7 @@
       + '<label>类别 <select name="category">' + CATS.map(function (c) {
         return '<option value="' + c + '">' + c + "</option>";
       }).join("") + "</select></label>"
-      + '<label>标签 <input name="tags" placeholder="用空格分开"></label>'
+      + '<label class="tag-field">标签 <input name="tags" placeholder="用空格分开"></label>'
       + '<label>摘要 <input name="excerpt" maxlength="200" placeholder="可以空着"></label>'
       + "</div>"
       + '<textarea name="body" hidden></textarea>';
@@ -320,6 +374,7 @@
       form.body.value = item.body || "";
     }
     applyDate(form, seed);
+    mountTagPicks(form.tags);
     const source = form.querySelector("textarea");
     const writer = mountWriter(source);
     writer.element.classList.add("sheet__page");
@@ -492,12 +547,13 @@
     form.className = "adm__form";
     form.innerHTML = field("日期", '<input name="date" type="date" required>')
       + field("正文", '<textarea name="text" rows="8" required></textarea>')
-      + field("标签", '<input name="tags">');
+      + '<label class="tag-field">标签 <input name="tags" placeholder="用空格分开"></label>';
     if (item) {
       form.text.value = item.text || "";
       form.tags.value = (item.tags || []).join(" ");
     }
     applyDate(form, item);
+    mountTagPicks(form.tags);
     const save = document.createElement("button");
     save.className = "gb__submit";
     save.type = "submit";
@@ -898,6 +954,7 @@
     const site = await send("/api/site");
     const book = await send("/api/guestbook");
     const drafts = await send("/api/admin/drafts").catch(function () { return { items: [] }; });
+    rememberTags([site.articles, site.notes, drafts.items]);
     renderArticles(site.articles || [], drafts.items || []);
     renderNotes(site.notes || []);
     aboutForm.paragraphs.value = ((site.about && site.about.paragraphs) || []).join("\n\n");

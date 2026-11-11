@@ -61,7 +61,8 @@ test("推荐页不把同步失败原因给访客看，缓存和其他页一致",
   expect(adminJs).toContain("同意");
   expect(adminJs).toContain("不同意");
   expect(adminJs).toContain("/remove");
-  expect(adminJs).toContain("删除");
+  expect(adminJs).toContain("tag-pick");
+  expect(adminJs).toContain("knownTags");
 });
 
 test("关掉写作页不会把草稿再存回去，长文保存不带 keepalive", () => {

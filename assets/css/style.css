@@ -2460,6 +2460,40 @@ body[data-page="admin"] .adm__form input[type="date"]::-webkit-calendar-picker-i
   opacity: 0.72;
 }
 
+body[data-page="admin"] .tag-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 10px;
+}
+
+body[data-page="admin"] .sheet__meta .tag-field {
+  flex-basis: 100%;
+  flex-wrap: wrap;
+}
+
+body[data-page="admin"] .sheet__meta .tag-picks { flex-basis: 100%; }
+
+body[data-page="admin"] .tag-pick {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+body[data-page="admin"] .tag-pick:hover,
+body[data-page="admin"] .tag-pick.is-on { color: var(--ink); }
+
+body[data-page="admin"] .tag-pick.is-on {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 body[data-page="admin"] .desk__form-actions {
   display: flex;
   flex-wrap: wrap;
