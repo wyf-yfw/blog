@@ -1,3 +1,4 @@
+import { syncStars } from "./stars.js";
 import { handleContent } from "./admin-content.js";
 import { handleUsage } from "./usage.js";
 import { clientIp, sha256Hex } from "./guestbook.js";
@@ -103,6 +104,11 @@ export async function handleAdmin(request, env) {
   const session = await requireSession(request, env, now);
   if (path === "/api/admin/usage" && request.method === "GET") {
     return withSession(await handleUsage(env, now), session);
+  }
+
+  if (path === "/api/admin/stars/sync" && request.method === "POST") {
+    const out = await syncStars(env);
+    return withSession(json(out), session);
   }
   const content = await handleContent(request, env, session);
   if (content) return withSession(content, session);

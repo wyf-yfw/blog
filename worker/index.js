@@ -3,6 +3,7 @@ import { handleGuestbook } from "./guestbook.js";
 import { fail } from "./http.js";
 import { handleMedia, handleUpload } from "./media.js";
 import { handleSite } from "./site.js";
+import { handleStars, syncStars } from "./stars.js";
 import { handleView } from "./views.js";
 
 export default {
@@ -14,6 +15,7 @@ export default {
       if (path === "/api/guestbook") {
         return await handleGuestbook(request, env);
       }
+      if (path === "/api/stars") return await handleStars(env);
       if (path === "/api/view") return await handleView(request, env);
       if (path === "/api/admin/media" && request.method === "POST") return await handleUpload(request, env);
       if (path.startsWith("/api/admin/")) return await handleAdmin(request, env);
@@ -24,5 +26,10 @@ export default {
       if (err && err.status) return fail(err.status, err.code || "internal", err.hint || "服务器出错了");
       return fail(500, "internal", "服务器出错了");
     }
+  },
+
+  // 每天一次，把 GitHub star 同步进 D1
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(syncStars(env).catch(() => {}));
   },
 };
