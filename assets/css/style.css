@@ -1452,6 +1452,95 @@ body.is-editing .tl__item.adm-host {
   color: var(--muted);
 }
 
+/* ---------- 18.6 推荐页 ---------- */
+.star-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 28px 0 4px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.star-chip {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0 0 3px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  transition: color .18s var(--ease), border-color .18s var(--ease);
+}
+
+.star-chip:hover { color: var(--ink); }
+
+.star-chip.is-active {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.stars { margin-top: 8px; }
+
+.star {
+  display: grid;
+  grid-template-columns: minmax(0, 15em) minmax(0, 1fr) auto;
+  gap: 6px 24px;
+  align-items: baseline;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--line);
+  transition: background-color .2s var(--ease);
+}
+
+.star:hover { background-color: rgba(10, 10, 11, 0.022); }
+
+.star__repo {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.star:hover .star__repo { text-decoration: underline; text-underline-offset: 3px; }
+
+.star__desc {
+  font-size: var(--fs-sm);
+  color: var(--body);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.star__meta {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.stars__foot {
+  margin-top: 22px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 760px) {
+  .star {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .star__meta { font-size: 0.625rem; }
+}
+
 /* ---------- 19. 小工具 ---------- */
 .hidden { display: none !important; }
 [hidden] { display: none !important; }
