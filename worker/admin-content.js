@@ -3,7 +3,7 @@ import { json, readJson } from "./http.js";
 import { newId } from "./ids.js";
 import { shanghaiNow } from "./time.js";
 import { recordTimeline } from "./timeline.js";
-import { decideLink, listForAdmin } from "./links.js";
+import { decideLink, listForAdmin, removeLink } from "./links.js";
 import { aboutInput, articleInput, goalsInput, noteInput } from "./validate.js";
 
 function idFrom(path, prefix) {
@@ -119,8 +119,13 @@ export async function handleContent(request, env, session) {
     const cut = rest.lastIndexOf("/");
     if (cut <= 0) return null;
     const action = rest.slice(cut + 1);
-    if (action !== "approve" && action !== "reject") return null;
+    if (action !== "approve" && action !== "reject" && action !== "remove") return null;
     const id = decodeURIComponent(rest.slice(0, cut));
+    if (action === "remove") {
+      const removed = await removeLink(db, id);
+      if (!removed) return json({ error: "not_found", hint: "没有这条已上架的友链" }, 404);
+      return json({ ok: true });
+    }
     const found = await decideLink(db, id, action, now);
     if (!found) return json({ error: "not_found", hint: "没有这条申请" }, 404);
     return json({ ok: true });

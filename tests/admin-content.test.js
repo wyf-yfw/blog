@@ -113,6 +113,23 @@ test("友链申请要审核，不同意和没审的都不公开", async () => {
   const open = await (await worker.fetch(new Request("https://kris.test/api/links"), env)).json();
   expect(open.items).toEqual([{ name: "甲", url: "https://example.com/a", note: "一句" }]);
 
+  const blocked = await send("/api/admin/links/" + id + "/remove", "POST");
+  expect(blocked.status).toBe(200);
+  const cleared = await (await worker.fetch(new Request("https://kris.test/api/links"), env)).json();
+  expect(cleared.items).toEqual([]);
+
+  const reapplied = await worker.fetch(new Request("https://kris.test/api/links", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.13" },
+    body: JSON.stringify({ name: "甲", url: "https://example.com/a", note: "一句" }),
+  }), env);
+  expect(reapplied.status).toBe(200);
+  const pendingAgain = await (await send("/api/admin/links", "GET")).json();
+  const pendingId = pendingAgain.pending[0].id;
+  const cannotRemove = await send("/api/admin/links/" + pendingId + "/remove", "POST");
+  expect(cannotRemove.status).toBe(404);
+  await send("/api/admin/links/" + pendingId + "/reject", "POST");
+
   const second = await worker.fetch(new Request("https://kris.test/api/links", {
     method: "POST",
     headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.12" },
@@ -125,10 +142,11 @@ test("友链申请要审核，不同意和没审的都不公开", async () => {
   expect(rejected.status).toBe(200);
   await send("/api/admin/links/" + other + "/approve", "POST");
   const after = await (await worker.fetch(new Request("https://kris.test/api/links"), env)).json();
-  expect(after.items.map((item) => item.name)).toEqual(["甲"]);
+  expect(after.items).toEqual([]);
   const decided = await (await send("/api/admin/links", "GET")).json();
   expect(decided.pending).toEqual([]);
-  expect(decided.rejected.map((item) => item.name)).toEqual(["乙"]);
+  expect(decided.approved).toEqual([]);
+  expect(decided.rejected.map((item) => item.name)).toEqual(["乙", "甲"]);
   const timeline = await env.DB.prepare("SELECT COUNT(*) AS n FROM timeline").first();
   expect(timeline.n).toBe(before.n);
 });

@@ -932,7 +932,7 @@
     }
   }
 
-  function applyCard(item, withActions) {
+  function applyCard(item, mode) {
     const row = document.createElement("article");
     row.className = "desk__apply";
     const main = document.createElement("div");
@@ -956,17 +956,35 @@
       main.appendChild(note);
     }
     row.appendChild(main);
-    if (withActions) {
+    if (mode === "review" || mode === "delete") {
       const ops = document.createElement("div");
       ops.className = "desk__apply-ops";
-      const yes = textButton("同意", false);
-      const no = textButton("不同意", true);
-      yes.addEventListener("click", function () { decide(item.id, "approve", yes, no); });
-      no.addEventListener("click", function () { decide(item.id, "reject", yes, no); });
-      ops.append(yes, no);
+      if (mode === "review") {
+        const yes = textButton("同意", false);
+        const no = textButton("不同意", true);
+        yes.addEventListener("click", function () { decide(item.id, "approve", yes, no); });
+        no.addEventListener("click", function () { decide(item.id, "reject", yes, no); });
+        ops.append(yes, no);
+      } else {
+        const del = textButton("删除", true);
+        del.addEventListener("click", function () { removeApproved(item.id, del); });
+        ops.appendChild(del);
+      }
       row.appendChild(ops);
     }
     return row;
+  }
+
+  async function removeApproved(id, button) {
+    button.disabled = true;
+    try {
+      await send("/api/admin/links/" + encodeURIComponent(id) + "/remove", { method: "POST" });
+      deskStatus.textContent = "已经删除";
+      await load();
+    } catch (err) {
+      deskStatus.textContent = err.message;
+      button.disabled = false;
+    }
   }
 
   async function decide(id, action, yes, no) {
@@ -984,7 +1002,7 @@
     }
   }
 
-  function reviewGroup(title, hint, items, withActions, emptyText) {
+  function reviewGroup(title, hint, items, mode, emptyText) {
     const block = document.createElement("section");
     const head = document.createElement("h2");
     head.className = "desk__apply-title";
@@ -1003,7 +1021,7 @@
       block.appendChild(empty);
       return block;
     }
-    items.forEach(function (item) { block.appendChild(applyCard(item, withActions)); });
+    items.forEach(function (item) { block.appendChild(applyCard(item, mode)); });
     return block;
   }
 
@@ -1014,10 +1032,10 @@
     const approved = (data && data.approved) || [];
     const rejected = (data && data.rejected) || [];
     const parts = [
-      reviewGroup("待审核", "同意之后才会出现在友链页。", pending, true, "还没有待审核的申请。"),
-      reviewGroup("已上架", "", approved, false, "还没有上架的友链。")
+      reviewGroup("待审核", "同意之后才会出现在友链页。", pending, "review", "还没有待审核的申请。"),
+      reviewGroup("已上架", "", approved, "delete", "还没有上架的友链。")
     ];
-    if (rejected.length) parts.push(reviewGroup("未通过", "", rejected, false, ""));
+    if (rejected.length) parts.push(reviewGroup("未通过", "", rejected, "", ""));
     section.replaceChildren.apply(section, parts);
   }
 

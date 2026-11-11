@@ -29,6 +29,13 @@ export async function listForAdmin(db) {
   return { pending, approved, rejected };
 }
 
+export async function removeLink(db, id) {
+  const row = await db.prepare("SELECT status FROM links WHERE id = ?").bind(id).first();
+  if (!row || row.status !== "approved") return false;
+  await db.prepare("DELETE FROM links WHERE id = ? AND status = 'approved'").bind(id).run();
+  return true;
+}
+
 export async function decideLink(db, id, action, now) {
   const row = await db.prepare("SELECT status FROM links WHERE id = ?").bind(id).first();
   if (!row) return false;

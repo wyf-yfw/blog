@@ -5,6 +5,9 @@
   const box = document.querySelector("[data-links]");
   const emptyEl = document.querySelector("[data-links-empty]");
   const form = document.querySelector("[data-link-form]");
+  const panel = document.querySelector("[data-link-panel]");
+  const openBtn = document.querySelector("[data-link-open]");
+  const closeBtn = document.querySelector("[data-link-close]");
   const statusEl = document.querySelector("[data-link-status]");
   if (!box) return;
 
@@ -35,6 +38,27 @@
     if (!statusEl) return;
     statusEl.textContent = text || "";
     statusEl.dataset.kind = kind || "";
+  }
+
+  function showForm(open) {
+    if (!panel || !openBtn) return;
+    panel.hidden = !open;
+    openBtn.hidden = open;
+    openBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) {
+      setStatus("");
+      const name = form && form.querySelector('[name="name"]');
+      if (name) name.focus();
+    }
+  }
+
+  if (openBtn) openBtn.addEventListener("click", function () { showForm(true); });
+  if (closeBtn) {
+    closeBtn.addEventListener("click", function () {
+      if (form) form.reset();
+      showForm(false);
+      setStatus("");
+    });
   }
 
   async function load() {
@@ -81,6 +105,7 @@
         const data = await res.json().catch(function () { return {}; });
         if (!res.ok) throw new Error(data.hint || "没有送出");
         form.reset();
+        showForm(false);
         setStatus("已经收到。我同意之后会出现在上面。", "ok");
       } catch (err) {
         setStatus(err.message, "err");
