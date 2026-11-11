@@ -1673,7 +1673,7 @@ body[data-page="admin"] .desk__goal input[type="text"] {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 8px 16px;
-  margin-top: 28px;
+  margin-top: 14px;
 }
 
 .friend-apply__toggle,

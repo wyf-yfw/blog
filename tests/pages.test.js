@@ -52,6 +52,8 @@ test("推荐页不把同步失败原因给访客看，缓存和其他页一致",
   expect(linksPage).toContain('href="links.html" aria-current="page"');
   expect(linksPage).toContain("申请友链");
   expect(linksPage).toContain("data-link-panel hidden");
+  expect(linksPage.indexOf("朋友们的站点")).toBeLessThan(linksPage.indexOf("data-link-open"));
+  expect(linksPage.indexOf("data-link-open")).toBeLessThan(linksPage.indexOf("data-links"));
   expect(linksJs).toContain("/api/links");
   expect(linksJs).toContain("method: \"POST\"");
   expect(adminJs).toContain("/approve");
