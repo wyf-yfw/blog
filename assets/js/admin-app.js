@@ -126,7 +126,34 @@
     return { blob: blob, width: width, height: height, type: type };
   }
 
-  function sizeChunk(chunk) {
+  /* 图片在正文里前后各占一个空行，再打开时不要把这些空行灌进文字框。 */
+  function peel(slice, lead, tail) {
+    let body = slice;
+    if (lead) body = body.replace(/^(?:[ \t]*\n)+/, "");
+    if (tail) body = body.replace(/(?:\n[ \t]*)+$/, "");
+    return body;
+  }
+
+  function betweenPics(chunk) {
+    const prev = chunk.previousElementSibling;
+    const next = chunk.nextElementSibling;
+    return !!(prev && prev.dataset && prev.dataset.pic && next && next.dataset && next.dataset.pic);
+  }
+
+  function sizeChunk(chunk, editing) {
+    const blank = chunk.value.trim() === "";
+    const prevPic = chunk.previousElementSibling;
+    const followsPic = !!(prevPic && prevPic.dataset && prevPic.dataset.pic);
+    const focused = editing === undefined ? document.activeElement === chunk : editing;
+    const gap = blank && betweenPics(chunk) && !focused;
+    const tail = blank && followsPic && !betweenPics(chunk) && !focused;
+    chunk.classList.toggle("is-blank", blank);
+    chunk.classList.toggle("is-gap", gap);
+    chunk.classList.toggle("is-tail", tail);
+    if (gap || tail) {
+      chunk.style.height = "0px";
+      return;
+    }
     chunk.style.height = "auto";
     chunk.style.height = Math.max(chunk.scrollHeight, 28) + "px";
   }
@@ -137,8 +164,15 @@
     chunk.rows = 1;
     chunk.value = value;
     chunk.addEventListener("input", function () { sizeChunk(chunk); });
+    chunk.addEventListener("focus", function () { sizeChunk(chunk, true); });
+    chunk.addEventListener("blur", function () { sizeChunk(chunk, false); });
     chunk.addEventListener("keydown", function (e) {
       if ((e.key !== "Backspace" && e.key !== "Delete") || chunk.selectionStart !== chunk.selectionEnd) return;
+      /* 两张图中间只是间隔。删掉这几行空的，不能把照片一起删掉。 */
+      if (betweenPics(chunk) && chunk.value.trim() === "") {
+        e.preventDefault();
+        return;
+      }
       if (e.key === "Backspace" && chunk.selectionStart === 0) {
         const pic = chunk.previousElementSibling;
         const prev = pic && pic.previousElementSibling;
@@ -191,11 +225,11 @@
     let last = 0;
     let match;
     while ((match = re.exec(text))) {
-      writer.appendChild(makeChunk(text.slice(last, match.index)));
+      writer.appendChild(makeChunk(peel(text.slice(last, match.index), last > 0, true)));
       writer.appendChild(makePic(match[2], match[1]));
       last = match.index + match[0].length;
     }
-    writer.appendChild(makeChunk(text.slice(last)));
+    writer.appendChild(makeChunk(peel(text.slice(last), last > 0, false)));
     source.after(writer);
     writer.querySelectorAll("textarea").forEach(sizeChunk);
     requestAnimationFrame(function () {
@@ -245,10 +279,10 @@
         const end = atEnd ? chunk.value.length : chunk.selectionEnd;
         const after = makeChunk(chunk.value.slice(end).replace(/^\n+/, ""));
         chunk.value = chunk.value.slice(0, start).replace(/\n+$/, "");
-        sizeChunk(chunk);
         chunk.after(makePic(src, alt || "说明"), after);
-        sizeChunk(after);
         after.focus();
+        sizeChunk(chunk);
+        sizeChunk(after);
         writer.dispatchEvent(new Event("input", { bubbles: true }));
       }
     };

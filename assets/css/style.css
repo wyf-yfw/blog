@@ -2716,6 +2716,7 @@ body[data-page="admin"] .sheet__meta select {
 body[data-page="admin"] .sheet__meta input[type="date"] { color-scheme: light; }
 
 body[data-page="admin"] .sheet__page.desk__writer {
+  --chunk-line: calc(1.125rem * 1.7);
   margin: 22px 0 0;
   padding: 0;
   border: 0;
@@ -2739,6 +2740,7 @@ body[data-page="admin"] .sheet__page textarea {
 body[data-page="admin"] .sheet__page textarea::placeholder { color: var(--muted); }
 
 body[data-page="admin"] .desk__writer {
+  --chunk-line: 1.7em;
   margin-top: 6px;
   padding: 9px 10px;
   border: 1px solid var(--line);
@@ -2769,8 +2771,23 @@ body[data-page="admin"] .desk__writer textarea {
 
 body[data-page="admin"] .desk__writer textarea:focus { outline: none; }
 
-body[data-page="admin"] .desk__pic {
-  margin: 0.75em 0;
+body[data-page="admin"] .desk__writer textarea.is-gap,
+body[data-page="admin"] .desk__writer textarea.is-tail {
+  min-height: 0;
+  padding: 0;
+}
+
+/* 文字和照片隔一个空行。连着的两张照片不再夹三行空档。 */
+body[data-page="admin"] .desk__pic { margin: 0; }
+
+body[data-page="admin"] .desk__chunk:not(.is-blank) + .desk__pic,
+body[data-page="admin"] .desk__pic + .desk__chunk.is-blank:not(.is-gap),
+body[data-page="admin"] .desk__pic + .desk__chunk:not(.is-blank) {
+  margin-top: var(--chunk-line);
+}
+
+body[data-page="admin"] .desk__pic + .desk__chunk.is-gap + .desk__pic {
+  margin-top: 0.5em;
 }
 
 body[data-page="admin"] .desk__pic img {
