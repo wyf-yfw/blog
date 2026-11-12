@@ -389,11 +389,16 @@
       chunk.selectionStart = chunk.selectionEnd = chunk.value.length;
     });
     const pace = form.querySelector("[data-pace]");
+    const countEl = document.createElement("p");
+    countEl.className = "sheet__count";
+    countEl.setAttribute("data-count", "");
+    form.appendChild(countEl);
     const showPace = function () {
       const plain = writer.read().replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\s/g, "");
       const count = Array.from(plain).length;
       const minutes = count ? Math.min(99, Math.max(1, Math.ceil(count / 400))) : 0;
       pace.textContent = minutes ? "阅读约 " + minutes + " 分钟" : "";
+      countEl.textContent = count + " 字";
     };
     writer.element.addEventListener("input", showPace);
     showPace();

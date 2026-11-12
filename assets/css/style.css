@@ -2605,6 +2605,24 @@ body[data-page="admin"] .sheet {
   padding-bottom: 18vh;
 }
 
+body[data-page="admin"] .sheet__count {
+  position: fixed;
+  z-index: 6;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 10px max(var(--pad), calc((100vw - var(--wrap)) / 2 + var(--pad)));
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  pointer-events: none;
+}
+
 body[data-page="admin"] .sheet__bar {
   position: sticky;
   top: 0;

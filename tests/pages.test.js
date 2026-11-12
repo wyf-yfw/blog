@@ -61,6 +61,8 @@ test("推荐页不把同步失败原因给访客看，缓存和其他页一致",
   expect(adminJs).toContain("同意");
   expect(adminJs).toContain("不同意");
   expect(adminJs).toContain("/remove");
+  expect(adminJs).toContain("data-count");
+  expect(adminJs).toContain('count + " 字"');
   expect(adminJs).toContain("tag-pick");
   expect(adminJs).toContain("knownTags");
 });
