@@ -45,7 +45,7 @@ function goalsOf(row) {
 }
 
 export async function getSite(db) {
-  const about = await db.prepare("SELECT paragraphs FROM about WHERE id = 1").first();
+  const about = await db.prepare("SELECT paragraphs, photo FROM about WHERE id = 1").first();
   const goals = await db.prepare("SELECT year, items FROM goals WHERE id = 1").first();
   const articles = await db.prepare(
     "SELECT id, date, title, excerpt, category, tags, minutes, body FROM articles ORDER BY date DESC, created_at DESC, id DESC"
@@ -63,7 +63,7 @@ export async function getSite(db) {
     try { paragraphs = JSON.parse(about.paragraphs) || []; } catch (e) { paragraphs = []; }
   }
   return {
-    about: { paragraphs, goals: goalsOf(goals) },
+    about: { paragraphs, photo: (about && about.photo) || "", goals: goalsOf(goals) },
     articles: articles.results.map((row) => mapArticle(row, bySubject.get("post:" + row.id) || 0)),
     notes: notes.results.map(mapNote),
     timeline: timeline.results,

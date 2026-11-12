@@ -69,7 +69,10 @@ test("推荐页不把同步失败原因给访客看，缓存和其他页一致",
   expect(adminJs).toContain("data-count");
   expect(adminJs).toContain('count + " 字"');
   expect(adminJs).toContain("tag-pick");
-  expect(adminJs).toContain("knownTags");
+  expect(adminJs).toContain("已发布");
+  expect(adminJs).toContain("还没有草稿");
+  expect(adminJs).toContain("data-about-photo");
+  expect(about).toContain('data-slot="about-photo"');
 });
 
 test("关掉写作页不会把草稿再存回去，长文保存不带 keepalive", () => {

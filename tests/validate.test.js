@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { timelineText } from "../worker/timeline-text.js";
-import { aboutInput, articleInput, goalsInput, linkApplyInput, linkUrlKey, noteInput } from "../worker/validate.js";
+import { aboutInput, aboutPhotoInput, articleInput, goalsInput, linkApplyInput, linkUrlKey, noteInput } from "../worker/validate.js";
 
 const today = "2026-11-10";
 
@@ -34,6 +34,14 @@ test("手记要有正文，关于会丢掉空段", () => {
   expect(() => noteInput({ text: "  " }, today)).toThrowError(expect.objectContaining({ hint: "手记要有内容" }));
   expect(noteInput({ text: " 一句 " }, today)).toEqual({ date: today, text: "一句", tags: [] });
   expect(aboutInput({ paragraphs: [" 甲 ", "", "乙"] })).toEqual(["甲", "乙"]);
+});
+
+test("关于的图只收站内地址", () => {
+  expect(aboutPhotoInput("")).toBe("");
+  expect(aboutPhotoInput(" /media/a.jpg ")).toBe("/media/a.jpg");
+  expect(aboutPhotoInput("/assets/img/avatar.svg")).toBe("/assets/img/avatar.svg");
+  expect(() => aboutPhotoInput("https://example.com/a.jpg")).toThrowError(expect.objectContaining({ hint: "图片地址不对" }));
+  expect(() => aboutPhotoInput("javascript:alert(1)")).toThrowError(expect.objectContaining({ hint: "图片地址不对" }));
 });
 
 test("年度目标丢掉空行，并记住完成状态", () => {

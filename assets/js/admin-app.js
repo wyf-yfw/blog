@@ -712,11 +712,39 @@
     return add;
   }
 
+  let articlePane = "live";
+
   function renderArticles(items, drafts) {
     const section = document.querySelector("[data-articles]");
+    section.className = "desk__sec";
+    const head = document.createElement("div");
+    head.className = "desk__head desk__head--split";
+    const tabs = document.createElement("div");
+    tabs.className = "desk__switch";
+    tabs.setAttribute("role", "tablist");
+    tabs.setAttribute("aria-label", "文章状态");
+
+    function paneTab(label, id) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.setAttribute("role", "tab");
+      button.setAttribute("aria-selected", articlePane === id ? "true" : "false");
+      button.textContent = label;
+      button.addEventListener("click", function () {
+        if (articlePane === id) return;
+        articlePane = id;
+        renderArticles(items, drafts);
+      });
+      return button;
+    }
+
+    tabs.append(paneTab("草稿", "draft"), paneTab("已发布", "live"));
+    const add = textButton("新建");
+    add.addEventListener("click", function () { openSheet(null); });
+    head.append(tabs, add);
+
     const draftRows = (drafts || []).map(function (d) {
-      const label = d.title ? "草稿 · " + d.title : "草稿 · 还没起标题";
-      const made = makeRow(whenOf(d.updatedAt.slice(0, 10)), label);
+      const made = makeRow(whenOf(d.updatedAt.slice(0, 10)), d.title || "还没起标题");
       const go = textButton("继续写");
       go.addEventListener("click", function () {
         const article = items.find(function (a) { return a.id === d.key; }) || null;
@@ -745,8 +773,20 @@
       made.ops.append(edit, del);
       return made.el;
     });
-    const add = renderRows(section, "文章", draftRows.concat(rows));
-    add.addEventListener("click", function () { openSheet(null); });
+
+    const showingDrafts = articlePane === "draft";
+    const visible = showingDrafts ? draftRows : rows;
+    const list = document.createElement("div");
+    list.className = "desk__list";
+    if (!visible.length) {
+      const empty = document.createElement("p");
+      empty.className = "desk__empty";
+      empty.textContent = showingDrafts ? "还没有草稿。" : "还没有文章。";
+      list.appendChild(empty);
+    } else {
+      visible.forEach(function (row) { list.appendChild(row); });
+    }
+    section.replaceChildren(head, list);
   }
 
   function renderNotes(items) {
@@ -1031,6 +1071,7 @@
     renderArticles(site.articles || [], drafts.items || []);
     renderNotes(site.notes || []);
     aboutForm.paragraphs.value = ((site.about && site.about.paragraphs) || []).join("\n\n");
+    showAboutPhoto((site.about && site.about.photo) || "");
     renderGoalEditor(site);
     renderLinkReview(await send("/api/admin/links"));
     renderPlain(document.querySelector("[data-timeline]"), "时间线", site.timeline || [], function (item) {
@@ -1187,6 +1228,53 @@
     return row;
   }
 
+  let aboutPhoto = "";
+
+  function showAboutPhoto(url) {
+    aboutPhoto = url || "";
+    const box = aboutForm.querySelector("[data-about-photo]");
+    const clear = aboutForm.querySelector("[data-about-photo-clear]");
+    const pick = aboutForm.querySelector("[data-about-photo-pick]");
+    let img = box.querySelector("img");
+    if (aboutPhoto) {
+      if (!img) {
+        img = document.createElement("img");
+        img.alt = "";
+        box.insertBefore(img, box.querySelector(".desk__form-actions"));
+      }
+      img.src = aboutPhoto;
+    } else if (img) {
+      img.remove();
+    }
+    clear.hidden = !aboutPhoto;
+    pick.textContent = aboutPhoto ? "换一张" : "上传图片";
+  }
+
+  aboutForm.querySelector("[data-about-photo-pick]").addEventListener("click", function () {
+    aboutForm.querySelector("[data-about-photo-file]").click();
+  });
+
+  aboutForm.querySelector("[data-about-photo-file]").addEventListener("change", async function (e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const prepared = await prepareImage(file);
+      const form = new FormData();
+      form.set("file", new File([prepared.blob], "image", { type: prepared.type }));
+      form.set("width", String(prepared.width));
+      form.set("height", String(prepared.height));
+      const saved = await send("/api/admin/media", { method: "POST", body: form });
+      showAboutPhoto(saved.url);
+    } catch (err) {
+      deskStatus.textContent = err.message;
+    }
+  });
+
+  aboutForm.querySelector("[data-about-photo-clear]").addEventListener("click", function () {
+    showAboutPhoto("");
+  });
+
   function renderGoalEditor(site) {
     const goals = (site.about && site.about.goals) || {};
     const items = Array.isArray(goals.items) && goals.items.length ? goals.items : [null];
@@ -1218,6 +1306,7 @@
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           paragraphs: paragraphs,
+          photo: aboutPhoto,
           goals: { year: Number(aboutForm.goalYear.value), items: items }
         })
       });

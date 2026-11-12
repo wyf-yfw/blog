@@ -59,6 +59,16 @@ export function aboutInput(body) {
   return list.map((p) => String(p).trim()).filter(Boolean);
 }
 
+export function aboutPhotoInput(value) {
+  const photo = String(value == null ? "" : value).trim();
+  if (!photo) return "";
+  if (photo.length > 300 || /\s/.test(photo) || /[<>"']/.test(photo)) {
+    throw httpError(400, "invalid", "图片地址不对");
+  }
+  if (!/^\/(media|assets)\//.test(photo)) throw httpError(400, "invalid", "图片地址不对");
+  return photo;
+}
+
 export function linkUrlKey(url) {
   const parsed = new URL(url);
   parsed.hash = "";

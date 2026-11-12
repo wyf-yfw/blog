@@ -65,6 +65,23 @@ test("删除手记会记一条，删除时间线本身不会再记", async () =>
   expect(afterCount.n).toBe(before.n - 1);
 });
 
+test("关于页的图能换，只改段落不会清掉", async () => {
+  const saved = await send("/api/admin/about", "PUT", {
+    paragraphs: ["甲"],
+    photo: "/media/portrait.jpg",
+  });
+  expect(saved.status).toBe(200);
+  const read = async () => (await worker.fetch(new Request("https://kris.test/api/site"), env)).json();
+  expect((await read()).about.photo).toBe("/media/portrait.jpg");
+  await send("/api/admin/about", "PUT", { paragraphs: ["甲", "乙"] });
+  expect((await read()).about.photo).toBe("/media/portrait.jpg");
+  const cleared = await send("/api/admin/about", "PUT", { paragraphs: ["甲"], photo: "" });
+  expect(cleared.status).toBe(200);
+  expect((await read()).about.photo).toBe("");
+  const bad = await send("/api/admin/about", "PUT", { paragraphs: ["甲"], photo: "javascript:alert(1)" });
+  expect(bad.status).toBe(400);
+});
+
 test("关于按段落保存", async () => {
   const res = await send("/api/admin/about", "PUT", { paragraphs: ["甲", "  ", "乙"] });
   expect(res.status).toBe(200);

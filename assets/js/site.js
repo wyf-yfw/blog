@@ -362,6 +362,11 @@
     const views = Math.max(0, Number(data.views) || 0);
     setList('[data-slot="about"]', ps.map((t) => '<p>' + inline(t) + '</p>').join('')
       + '<p class="intro__views">' + views + ' 次浏览</p>');
+    const photo = (data.about && data.about.photo) || '';
+    const photoHtml = /^\/(media|assets)\//.test(photo)
+      ? '<img class="intro__photo" src="' + esc(photo) + '" alt="">'
+      : '';
+    setList('[data-slot="about-photo"]', photoHtml);
     const goals = (data.about && data.about.goals) || {};
     const items = Array.isArray(goals.items) ? goals.items : [];
     if (!items.length) {

@@ -4,6 +4,7 @@ import draftsSchema from "../migrations/0003_drafts.sql?raw";
 import starsSchema from "../migrations/0004_stars.sql?raw";
 import goalsSchema from "../migrations/0005_goals.sql?raw";
 import linksSchema from "../migrations/0006_links.sql?raw";
+import aboutPhotoSchema from "../migrations/0007_about_photo.sql?raw";
 import { env } from "cloudflare:workers";
 
 const TABLES = [
@@ -13,8 +14,15 @@ const TABLES = [
 ];
 
 export async function resetDb() {
-  const parts = (schema + "\n" + viewsSchema + "\n" + draftsSchema + "\n" + starsSchema + "\n" + goalsSchema + "\n" + linksSchema).split(/;\s*(?:\r?\n|$)/).map((s) => s.trim()).filter(Boolean);
-  for (const stmt of parts) await env.DB.prepare(stmt).run();
+  const parts = (schema + "\n" + viewsSchema + "\n" + draftsSchema + "\n" + starsSchema + "\n" + goalsSchema + "\n" + linksSchema + "\n" + aboutPhotoSchema).split(/;\s*(?:\r?\n|$)/).map((s) => s.trim()).filter(Boolean);
+  for (const stmt of parts) {
+    try {
+      await env.DB.prepare(stmt).run();
+    } catch (err) {
+      // 测试会反复跑迁移。给已有表加列第二次会报重复，这一列已经在就行。
+      if (!/duplicate column name/i.test(String(err && err.message || err))) throw err;
+    }
+  }
   for (const table of TABLES) await env.DB.prepare(`DELETE FROM ${table}`).run();
 }
 

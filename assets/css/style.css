@@ -1098,6 +1098,14 @@ body.is-editing .tl__item.adm-host {
   margin-top: 56px;
 }
 
+.intro:not(:has(> :not(.intro__body):not([hidden]))) {
+  grid-template-columns: minmax(0, 36em);
+}
+
+.intro:has(.intro__frame:not([hidden])) {
+  grid-template-columns: minmax(0, 34em) minmax(240px, 1fr);
+}
+
 .intro__body p {
   font-family: var(--font-serif);
   font-size: var(--fs-body);
@@ -1117,12 +1125,18 @@ body.is-editing .tl__item.adm-host {
   color: var(--muted);
 }
 
+.intro__frame { margin: 0; }
+
 .intro__photo {
+  display: block;
   width: 100%;
   aspect-ratio: 4 / 5;
   object-fit: cover;
+  border-radius: 2px;
   filter: saturate(0.92);
 }
+
+.intro__frame + .goals:not([hidden]) { margin-top: 28px; }
 
 .goals { margin-top: 0.35em; }
 
@@ -1776,8 +1790,10 @@ body[data-page="admin"] .desk__apply-ops {
 
 /* ---------- 20. 响应式 ---------- */
 @media (max-width: 900px) {
-  .intro { grid-template-columns: 1fr; gap: 32px; }
-  .intro__photo { max-width: 240px; order: -1; }
+  .intro,
+  .intro:not(:has(> :not(.intro__body):not([hidden]))),
+  .intro:has(.intro__frame:not([hidden])) { grid-template-columns: 1fr; }
+  .intro__frame { order: -1; max-width: 18rem; }
   .masonry { columns: 2; }
   .strip { grid-template-columns: repeat(3, 1fr); }
   .strip > :nth-child(n + 4) { display: none; }
@@ -2349,6 +2365,53 @@ body[data-page="admin"] .desk__head {
   justify-content: flex-end;
   margin: 0 0 8px;
 }
+
+body[data-page="admin"] .desk__head--split {
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 18px;
+  margin: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+body[data-page="admin"] .desk__switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+}
+
+body[data-page="admin"] .desk__switch button {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  margin-bottom: -1px;
+  padding: 8px 0 12px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+body[data-page="admin"] .desk__switch button:hover { color: var(--ink); }
+
+body[data-page="admin"] .desk__switch button[aria-selected="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+body[data-page="admin"] .desk__about-photo { margin-top: 22px; }
+
+body[data-page="admin"] .desk__about-photo img {
+  display: block;
+  width: 148px;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 2px;
+  margin: 10px 0 0;
+}
+
+body[data-page="admin"] .desk__head--split + .desk__list { border-top: 0; }
 
 body[data-page="admin"] [data-editor]:not(:empty) {
   margin-bottom: 18px;
