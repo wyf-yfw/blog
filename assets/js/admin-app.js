@@ -140,6 +140,37 @@
     return !!(prev && prev.dataset && prev.dataset.pic && next && next.dataset && next.dataset.pic);
   }
 
+  /* 在画面外量高度。若先把正在写的段落收成一行，浏览器会把页面往上拉，光标就离开眼前。 */
+  function contentHeight(chunk) {
+    const cs = getComputedStyle(chunk);
+    const probe = document.createElement("textarea");
+    probe.value = chunk.value;
+    probe.rows = 1;
+    probe.tabIndex = -1;
+    probe.setAttribute("aria-hidden", "true");
+    probe.style.cssText = "position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;height:0;min-height:0;overflow:hidden;box-sizing:border-box;padding:0;border:0;margin:0;white-space:pre-wrap;width:"
+      + chunk.clientWidth + "px;font:" + cs.font + ";line-height:" + cs.lineHeight
+      + ";letter-spacing:" + cs.letterSpacing + ";word-break:" + cs.wordBreak
+      + ";overflow-wrap:" + cs.overflowWrap + ";";
+    document.body.appendChild(probe);
+    const height = probe.scrollHeight;
+    probe.remove();
+    return height;
+  }
+
+  function holdScroll(apply) {
+    const x = window.scrollX;
+    const y = window.scrollY;
+    const focused = document.activeElement && document.activeElement.classList
+      && document.activeElement.classList.contains("desk__chunk");
+    apply();
+    if (window.scrollY < y - 8) window.scrollTo(x, y);
+    if (!focused) return;
+    requestAnimationFrame(function () {
+      if (window.scrollY < y - 8) window.scrollTo(x, y);
+    });
+  }
+
   function sizeChunk(chunk, editing) {
     const blank = chunk.value.trim() === "";
     const prevPic = chunk.previousElementSibling;
@@ -150,12 +181,15 @@
     chunk.classList.toggle("is-blank", blank);
     chunk.classList.toggle("is-gap", gap);
     chunk.classList.toggle("is-tail", tail);
-    if (gap || tail) {
-      chunk.style.height = "0px";
-      return;
-    }
-    chunk.style.height = "auto";
-    chunk.style.height = Math.max(chunk.scrollHeight, 28) + "px";
+    holdScroll(function () {
+      if (gap || tail) {
+        chunk.style.height = "0px";
+        return;
+      }
+      const next = Math.max(contentHeight(chunk), 28);
+      if (Math.abs(parseFloat(chunk.style.height) - next) < 1) return;
+      chunk.style.height = next + "px";
+    });
   }
 
   function makeChunk(value) {

@@ -2764,6 +2764,7 @@ body[data-page="admin"] .desk__writer textarea {
   background: transparent;
   resize: none;
   overflow: hidden;
+  overflow-anchor: none;
   outline: none;
   min-height: 1.7em;
   line-height: 1.7;
