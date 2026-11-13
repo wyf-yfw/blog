@@ -1123,4 +1123,34 @@ void main() {
 
   document.addEventListener('pointerup', (e) => endGesture(e, false));
   document.addEventListener('pointercancel', (e) => endGesture(e, true));
+
+  // 进首页停几秒，在当时还能看见的首屏里随机落一滴。自己先点过就不再落。
+  const GREET_MS = 3000;
+  let greetTimer = 0;
+  function greetDrop() {
+    greetTimer = 0;
+    if (dead || gesture || lastDrop > -1e8) return;
+    const band = hero.getBoundingClientRect();
+    const top = Math.max(band.top, 0);
+    const bottom = Math.min(band.bottom, window.innerHeight);
+    if (bottom - top < 80) return;
+    layout();
+    const x = cssW * (0.16 + Math.random() * 0.68);
+    const y = top + (bottom - top) * (0.18 + Math.random() * 0.64);
+    drop(x, y);
+  }
+  function armGreet() {
+    if (greetTimer || dead || lastDrop > -1e8) return;
+    if (document.hidden) return;
+    greetTimer = window.setTimeout(greetDrop, GREET_MS);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      window.clearTimeout(greetTimer);
+      greetTimer = 0;
+      return;
+    }
+    armGreet();
+  });
+  armGreet();
 })();
