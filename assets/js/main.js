@@ -341,7 +341,8 @@
 
     function frame() {
       if (!running) return;
-      const k = lining ? 0.16 : 0.18;
+      // 导航下划线稍慢一点，平时尽量贴着指针，只留很短的缓动
+      const k = lining ? 0.5 : 0.62;
       x += (tx - x) * k;
       y += (ty - y) * k;
       el.style.transform = `translate3d(${x}px, ${y}px, 0)`;

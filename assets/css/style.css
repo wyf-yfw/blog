@@ -176,7 +176,7 @@ body.is-leaving .foot {
   width: 4px;
   height: 4px;
   background: var(--ink);
-  transition: opacity .2s var(--ease), width .34s var(--ease), height .28s var(--ease), border-radius .28s var(--ease);
+  transition: opacity .16s var(--ease), width .2s var(--ease), height .16s var(--ease), border-radius .16s var(--ease);
 }
 
 /* 平时只有一个小点；指到可点元素上才绽开圆环 */
@@ -186,7 +186,7 @@ body.is-leaving .foot {
   border: 1px solid rgba(10, 10, 11, .4);
   opacity: 0;
   transform: translate(-50%, -50%) scale(.45);
-  transition: opacity .24s var(--ease), transform .32s var(--ease);
+  transition: opacity .16s var(--ease), transform .18s var(--ease);
 }
 
 .cursor.is-hot .cursor__ring {
