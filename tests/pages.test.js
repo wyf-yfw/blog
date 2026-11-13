@@ -18,6 +18,13 @@ test("公开页不再引用页内编辑脚本", () => {
   for (const html of pages) expect(html).not.toContain("admin.js");
 });
 
+test("公开页能发现 RSS", () => {
+  for (const html of pages) {
+    expect(html).toContain('type="application/rss+xml"');
+    expect(html).toContain('href="/rss.xml"');
+  }
+});
+
 test("公开脚本改向新接口，并有失败提示", () => {
   expect(siteJs).toContain("/api/site");
   expect(siteJs).toContain("kris-site-v1");

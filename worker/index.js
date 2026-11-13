@@ -6,6 +6,7 @@ import { handleLinks } from "./links.js";
 import { handleSite } from "./site.js";
 import { handleStars, syncStars } from "./stars.js";
 import { handleLike } from "./likes.js";
+import { handleRss } from "./rss.js";
 import { handleView } from "./views.js";
 
 export default {
@@ -21,6 +22,7 @@ export default {
       if (path === "/api/links") return await handleLinks(request, env);
       if (path === "/api/view") return await handleView(request, env);
       if (path === "/api/like") return await handleLike(request, env);
+      if (path === "/rss.xml") return await handleRss(request, env);
       if (path === "/api/admin/media" && request.method === "POST") return await handleUpload(request, env);
       if (path.startsWith("/api/admin/")) return await handleAdmin(request, env);
       if (path.startsWith("/media/")) return await handleMedia(request, env);

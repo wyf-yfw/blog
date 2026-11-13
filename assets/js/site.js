@@ -203,7 +203,7 @@
       </div>`).join('') : '');
 
     setList('[data-slot="notes"]', notes.length ? notes.map((n) => `
-      <article class="note adm-host" data-kind="note" data-id="${esc(n.id)}">
+      <article class="note adm-host" id="note-${esc(n.id)}" data-kind="note" data-id="${esc(n.id)}">
         <div class="note__date">${esc(MONTH(n.date).full)}</div>
         <div class="note__main">
           <div class="note__text">${renderBody(n.text)}</div>
@@ -424,7 +424,7 @@
     }
 
     setList('[data-slot="notes"]', notes.map((n) => `
-      <article class="note adm-host" data-kind="note" data-id="${esc(n.id)}">
+      <article class="note adm-host" id="note-${esc(n.id)}" data-kind="note" data-id="${esc(n.id)}">
         <div class="note__date">${esc(MONTH(n.date).full)}</div>
         <div class="note__main">
           <div class="note__text">${renderBody(n.text)}</div>
