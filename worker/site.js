@@ -9,7 +9,7 @@ function tagsOf(value) {
   }
 }
 
-function mapArticle(row, views) {
+function mapArticle(row, views, likes) {
   return {
     id: row.id,
     date: row.date,
@@ -20,11 +20,12 @@ function mapArticle(row, views) {
     minutes: row.minutes == null ? null : row.minutes,
     body: row.body,
     views,
+    likes,
   };
 }
 
-function mapNote(row) {
-  return { id: row.id, date: row.date, text: row.text, tags: tagsOf(row.tags) };
+function mapNote(row, likes) {
+  return { id: row.id, date: row.date, text: row.text, tags: tagsOf(row.tags), likes };
 }
 
 function goalsOf(row) {
@@ -58,14 +59,16 @@ export async function getSite(db) {
   ).all();
   const counts = await db.prepare("SELECT subject, total FROM view_counts").all();
   const bySubject = new Map(counts.results.map((row) => [row.subject, row.total]));
+  const likeRows = await db.prepare("SELECT subject, total FROM like_counts").all();
+  const byLike = new Map(likeRows.results.map((row) => [row.subject, row.total]));
   let paragraphs = [];
   if (about) {
     try { paragraphs = JSON.parse(about.paragraphs) || []; } catch (e) { paragraphs = []; }
   }
   return {
     about: { paragraphs, photo: (about && about.photo) || "", goals: goalsOf(goals) },
-    articles: articles.results.map((row) => mapArticle(row, bySubject.get("post:" + row.id) || 0)),
-    notes: notes.results.map(mapNote),
+    articles: articles.results.map((row) => mapArticle(row, bySubject.get("post:" + row.id) || 0, byLike.get("post:" + row.id) || 0)),
+    notes: notes.results.map((row) => mapNote(row, byLike.get("note:" + row.id) || 0)),
     timeline: timeline.results,
     views: bySubject.get("site") || 0,
   };

@@ -939,6 +939,16 @@ body.is-editing .tl__item.adm-host {
 
 .year:first-of-type .year__label { margin-top: 0; }
 
+.rowline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.rowline > .like { margin-top: 0; }
+
 .row {
   display: grid;
   grid-template-columns: 74px 1fr auto;
@@ -947,6 +957,8 @@ body.is-editing .tl__item.adm-host {
   padding: 17px 0;
   border-bottom: 1px solid var(--line);
 }
+
+.rowline > .row { border-bottom: 0; min-width: 0; }
 
 .row__date {
   font-family: var(--font-mono);
@@ -996,6 +1008,35 @@ body.is-editing .tl__item.adm-host {
 }
 
 .notes--page .note__tags { margin-top: 12px; }
+
+.like {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.like:hover,
+.like.is-on { color: var(--ink); }
+
+.like__heart {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.like.is-on .like__heart path { fill: currentColor; }
+
+.article__foot .like { margin-top: 0; }
 
 /* ---------- 14. 照片墙 ---------- */
 /* 没有 JS 时退化成三栏 CSS columns；有 JS 时按图片高度分配到最短的一栏 */

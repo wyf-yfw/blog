@@ -56,6 +56,8 @@ export async function handleContent(request, env, session) {
     await db.batch([
       db.prepare("DELETE FROM articles WHERE id = ?").bind(id),
       db.prepare("DELETE FROM drafts WHERE draft_key = ?").bind(id),
+      db.prepare("DELETE FROM like_counts WHERE subject = ?").bind("post:" + id),
+      db.prepare("DELETE FROM like_seen WHERE subject = ?").bind("post:" + id),
     ]);
     await recordTimeline(db, "article", "delete", current.title, now);
     return json({ ok: true });
@@ -87,7 +89,11 @@ export async function handleContent(request, env, session) {
     const id = idFrom(path, "/api/admin/notes/");
     const current = await db.prepare("SELECT text FROM notes WHERE id = ?").bind(id).first();
     if (!current) return json({ error: "not_found", hint: "没有这篇手记" }, 404);
-    await db.prepare("DELETE FROM notes WHERE id = ?").bind(id).run();
+    await db.batch([
+      db.prepare("DELETE FROM notes WHERE id = ?").bind(id),
+      db.prepare("DELETE FROM like_counts WHERE subject = ?").bind("note:" + id),
+      db.prepare("DELETE FROM like_seen WHERE subject = ?").bind("note:" + id),
+    ]);
     await recordTimeline(db, "note", "delete", current.text, now);
     return json({ ok: true });
   }

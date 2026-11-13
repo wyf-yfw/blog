@@ -89,6 +89,102 @@
     return String(b.id || '').localeCompare(String(a.id || ''));
   };
 
+  /* ---------- 点赞 ---------- */
+  const LIKE_KEY = "kris-likes";
+
+  function readLiked() {
+    try {
+      const list = JSON.parse(localStorage.getItem(LIKE_KEY) || "[]");
+      return new Set(Array.isArray(list) ? list.filter((s) => /^(post|note):[\w-]{1,40}$/.test(s)) : []);
+    } catch (e) {
+      return new Set();
+    }
+  }
+
+  function writeLiked(set) {
+    try { localStorage.setItem(LIKE_KEY, JSON.stringify([...set])); } catch (e) { /* 隐私模式就只记在这一下 */ }
+  }
+
+  let liked = readLiked();
+  const likePending = new Set();
+
+  function likeSubject(kind, id) {
+    return kind + ":" + id;
+  }
+
+  function likeButton(kind, id, count) {
+    const n = Math.max(0, Number(count) || 0);
+    const on = liked.has(likeSubject(kind, id));
+    const label = (on ? "取消点赞" : "点赞") + "，目前 " + n;
+    return `<button type="button" class="like${on ? " is-on" : ""}" data-like="${kind}" data-id="${esc(id)}" aria-pressed="${on ? "true" : "false"}" aria-label="${label}"><svg class="like__heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2s-6.6-4.1-6.6-8.6C5.4 8.4 7.2 6.6 9.5 6.6c1.2 0 2.3.6 2.5 1.7.2-1.1 1.3-1.7 2.5-1.7 2.3 0 4.1 1.8 4.1 5C18.6 16.1 12 20.2 12 20.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span class="like__n" aria-hidden="true">${n}</span></button>`;
+  }
+
+  function paintLike(kind, id, count) {
+    const n = Math.max(0, Number(count) || 0);
+    const on = liked.has(likeSubject(kind, id));
+    const label = (on ? "取消点赞" : "点赞") + "，目前 " + n;
+    document.querySelectorAll('.like[data-like="' + kind + '"][data-id="' + id + '"]').forEach((btn) => {
+      btn.classList.toggle("is-on", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+      btn.setAttribute("aria-label", label);
+      const num = btn.querySelector(".like__n");
+      if (num) num.textContent = String(n);
+    });
+  }
+
+  function storeLikeCount(kind, id, count) {
+    const data = window.KRIS_DATA;
+    const list = data && (kind === "post" ? data.articles : data.notes);
+    if (!list) return;
+    const item = list.find((row) => row.id === id);
+    if (item) item.likes = Math.max(0, Number(count) || 0);
+  }
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".like[data-like]");
+    if (!btn) return;
+    e.preventDefault();
+    const kind = btn.getAttribute("data-like");
+    const id = btn.getAttribute("data-id") || "";
+    if ((kind !== "post" && kind !== "note") || !/^[\w-]{1,40}$/.test(id)) return;
+    const subject = likeSubject(kind, id);
+    if (likePending.has(subject)) return;
+    const visitor = visitorToken();
+    if (!visitor) return;
+    const was = liked.has(subject);
+    const current = Number((btn.querySelector(".like__n") || {}).textContent) || 0;
+    const next = Math.max(0, current + (was ? -1 : 1));
+    likePending.add(subject);
+    if (was) liked.delete(subject);
+    else liked.add(subject);
+    writeLiked(liked);
+    storeLikeCount(kind, id, next);
+    paintLike(kind, id, next);
+    try {
+      const res = await fetch("/api/like", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ kind, id, visitor, on: !was }),
+      });
+      if (!res.ok) throw new Error("like");
+      const body = await res.json();
+      if (body.liked) liked.add(subject);
+      else liked.delete(subject);
+      writeLiked(liked);
+      storeLikeCount(kind, id, body.likes);
+      paintLike(kind, id, body.likes);
+    } catch (err) {
+      if (was) liked.add(subject);
+      else liked.delete(subject);
+      writeLiked(liked);
+      storeLikeCount(kind, id, current);
+      paintLike(kind, id, current);
+    } finally {
+      likePending.delete(subject);
+    }
+  });
+
   /* ---------- 首页 ---------- */
   function renderHome(data) {
     const arts = (data.articles || []).slice().sort(newest).slice(0, 3);
@@ -112,6 +208,7 @@
         <div class="note__main">
           <div class="note__text">${renderBody(n.text)}</div>
           ${noteTagsHtml(n.tags, false)}
+          ${likeButton("note", n.id, n.likes)}
         </div>
       </article>`).join('') : '');
   }
@@ -234,12 +331,13 @@
       <section class="year">
         <h2 class="year__label">${esc(y)}</h2>
         ${years[y].map((a) => `
-          <div class="adm-host" data-kind="article" data-id="${esc(a.id)}">
+          <div class="rowline adm-host" data-kind="article" data-id="${esc(a.id)}">
             <a class="row" href="post.html?p=${encodeURIComponent(a.id)}">
               <span class="row__date">${esc(MONTH(a.date).md)}</span>
               <span class="row__title">${esc(a.title)}</span>
               <span class="row__tags">${articleMeta(a).map(esc).join(' · ')}</span>
             </a>
+            ${likeButton("post", a.id, a.likes)}
           </div>`).join('')}
       </section>`).join(''));
   }
@@ -331,6 +429,7 @@
         <div class="note__main">
           <div class="note__text">${renderBody(n.text)}</div>
           ${noteTagsHtml(n.tags, true)}
+          ${likeButton("note", n.id, n.likes)}
         </div>
       </article>`).join(''));
   }
@@ -438,6 +537,7 @@
           </header>
           <div class="prose${art.excerpt ? ' prose--after-lede' : ''}">${renderBody(art.body)}</div>
           <footer class="article__foot article__foot--solo">
+            ${likeButton("post", art.id, art.likes)}
             <a class="sec__more" href="writing.html">← 回到文章列表</a>
           </footer>
         </div>
@@ -575,12 +675,9 @@
     main.prepend(p);
   }
 
-  async function recordView() {
-    const page = document.body.dataset.page || "";
-    if (!/^(index|writing|notes|about|timeline|guestbook|post)$/.test(page)) return;
-    let visitor = "";
+  function visitorToken() {
     try {
-      visitor = localStorage.getItem("kris-visitor") || "";
+      let visitor = localStorage.getItem("kris-visitor") || "";
       if (!/^[\w-]{16,80}$/.test(visitor)) {
         const bytes = crypto.getRandomValues(new Uint8Array(18));
         let raw = "";
@@ -588,9 +685,17 @@
         visitor = btoa(raw).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
         localStorage.setItem("kris-visitor", visitor);
       }
+      return visitor;
     } catch (e) {
-      return;
+      return "";
     }
+  }
+
+  async function recordView() {
+    const page = document.body.dataset.page || "";
+    if (!/^(index|writing|notes|about|timeline|guestbook|post)$/.test(page)) return;
+    const visitor = visitorToken();
+    if (!visitor) return;
     const payload = { page: page, visitor: visitor };
     if (page === "post") payload.id = new URLSearchParams(location.search).get("p") || "";
     try {

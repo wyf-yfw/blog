@@ -22,6 +22,9 @@ test("公开脚本改向新接口，并有失败提示", () => {
   expect(siteJs).toContain("/api/site");
   expect(siteJs).toContain("kris-site-v1");
   expect(siteJs).toContain("/api/view");
+  expect(siteJs).toContain("/api/like");
+  expect(siteJs).toContain('likeButton("note"');
+  expect(siteJs).toContain('likeButton("post"');
   expect(siteJs).toContain("次浏览");
   expect(siteJs).toContain("暂时读不到内容");
   expect(siteJs).not.toContain("content/site.json");
