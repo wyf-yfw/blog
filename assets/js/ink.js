@@ -787,6 +787,8 @@ void main() {
 
   /* ---------- 落墨 ---------- */
   function drop(clientX, clientY) {
+    window.clearTimeout(idleTimer);
+    idleTimer = 0;
     interrupt();
     layout();
     const u = clientX / cssW;
@@ -924,9 +926,10 @@ void main() {
     });
   }
 
-  // 墨先自己淡完，原句再从完全透明慢慢回到纸上。
+  // 墨先自己淡完，换一条新的，再从完全透明慢慢回到纸上。
   function fadeQuoteIn() {
     if (!quote) return;
+    if (window.KRIS_NEXT_QUOTE) window.KRIS_NEXT_QUOTE();
     const token = epoch;
     const nodes = [...quote.querySelectorAll('.q__text, .q__by')];
     nodes.forEach((el) => {
@@ -946,6 +949,10 @@ void main() {
       };
       el.addEventListener('transitionend', done);
     });
+    window.setTimeout(() => {
+      if (token !== epoch) return;
+      armIdle();
+    }, 1400);
   }
 
   function beginSettle() {
@@ -1124,33 +1131,41 @@ void main() {
   document.addEventListener('pointerup', (e) => endGesture(e, false));
   document.addEventListener('pointercancel', (e) => endGesture(e, true));
 
-  // 进首页停几秒，在当时还能看见的首屏里随机落一滴。自己先点过就不再落。
-  const GREET_MS = 3000;
-  let greetTimer = 0;
-  function greetDrop() {
-    greetTimer = 0;
-    if (dead || gesture || lastDrop > -1e8) return;
+  // 不点的话，句子回来后再等 30 秒，在首屏随机再滴一滴。
+  const IDLE_MS = 30000;
+  let idleTimer = 0;
+  function armIdle() {
+    window.clearTimeout(idleTimer);
+    idleTimer = 0;
+    if (dead || document.hidden) return;
+    idleTimer = window.setTimeout(idleDrop, IDLE_MS);
+  }
+  function idleDrop() {
+    idleTimer = 0;
+    if (dead || document.hidden) return;
+    if (gesture || raf || settling) {
+      armIdle();
+      return;
+    }
     const band = hero.getBoundingClientRect();
     const top = Math.max(band.top, 0);
     const bottom = Math.min(band.bottom, window.innerHeight);
-    if (bottom - top < 80) return;
+    if (bottom - top < 80) {
+      armIdle();
+      return;
+    }
     layout();
     const x = cssW * (0.16 + Math.random() * 0.68);
     const y = top + (bottom - top) * (0.18 + Math.random() * 0.64);
     drop(x, y);
   }
-  function armGreet() {
-    if (greetTimer || dead || lastDrop > -1e8) return;
-    if (document.hidden) return;
-    greetTimer = window.setTimeout(greetDrop, GREET_MS);
-  }
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      window.clearTimeout(greetTimer);
-      greetTimer = 0;
+      window.clearTimeout(idleTimer);
+      idleTimer = 0;
       return;
     }
-    armGreet();
+    if (!raf && !settling && !gesture) armIdle();
   });
-  armGreet();
+  armIdle();
 })();

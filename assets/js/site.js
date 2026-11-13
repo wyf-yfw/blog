@@ -548,25 +548,16 @@
   /* ---------- 首屏短句 ---------- */
   const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function renderHero() {
+  function paintQuote(q) {
     const box = document.querySelector('[data-quote]');
-    const list = window.KRIS_QUOTES || [];
-    if (!box || !list.length) return;
-
-    // 避免连续两次抽到同一句
-    let i = Math.floor(Math.random() * list.length);
-    if (list.length > 1 && String(i) === sessionStorage.getItem('quote-last')) {
-      i = (i + 1 + Math.floor(Math.random() * (list.length - 1))) % list.length;
-    }
-    sessionStorage.setItem('quote-last', String(i));
-
-    const q = list[i];
+    if (!box || !q) return;
     const foreign = !!q.zh;
 
     const text = box.querySelector('.q__text');
     const by = box.querySelector('.q__by');
     const meta = box.querySelector('.q__meta');
 
+    text.getAnimations().forEach((a) => a.cancel());
     text.textContent = q.text;
     text.setAttribute('lang', foreign ? q.lang : 'zh');
     by.textContent = q.author + (q.source || '');
@@ -622,6 +613,30 @@
       });
     }
   }
+
+  function pickQuoteIndex() {
+    const list = window.KRIS_QUOTES || [];
+    if (!list.length) return -1;
+    let i = Math.floor(Math.random() * list.length);
+    if (list.length > 1 && String(i) === sessionStorage.getItem('quote-last')) {
+      i = (i + 1 + Math.floor(Math.random() * (list.length - 1))) % list.length;
+    }
+    sessionStorage.setItem('quote-last', String(i));
+    return i;
+  }
+
+  function renderHero() {
+    const i = pickQuoteIndex();
+    if (i < 0) return;
+    paintQuote(window.KRIS_QUOTES[i]);
+  }
+
+  // 墨散尽、句子重新浮出来时换下一句
+  window.KRIS_NEXT_QUOTE = function () {
+    const i = pickQuoteIndex();
+    if (i < 0) return;
+    paintQuote(window.KRIS_QUOTES[i]);
+  };
 
   /* 把渲染结果写进槽位，并切换空状态 */
   function setList(sel, html) {
