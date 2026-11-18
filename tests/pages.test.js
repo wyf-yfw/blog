@@ -85,6 +85,8 @@ test("推荐页不把同步失败原因给访客看，缓存和其他页一致",
   expect(adminJs).toContain("只在密码页");
   expect(adminJs).toContain("/api/admin/entries");
   expect(siteJs).toContain("/api/private");
+  expect(siteJs).toContain("private.html?p=");
+  expect(siteJs).toContain("这则要密码");
   expect(headers).toContain("/private\n");
   expect(about).toContain('data-slot="about-photo"');
 });

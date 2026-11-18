@@ -2023,7 +2023,15 @@ body[data-page="admin"] .desk__apply-ops {
 .gb__submit:hover { opacity: 0.9; }
 .gb__submit:disabled { opacity: 0.5; cursor: default; }
 
-.lock { max-width: 22rem; }
+a.note--locked {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+a.note--locked:hover .note__text {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
 .lock .gb__input {
   font-family: ui-sans-serif, system-ui, sans-serif;
   line-height: normal;

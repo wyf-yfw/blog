@@ -190,19 +190,31 @@
     const arts = (data.articles || []).slice().sort(newest).slice(0, 3);
     const notes = (data.notes || []).slice().sort(newest).slice(0, 6);
 
-    setList('[data-slot="articles"]', arts.length ? arts.map((a) => `
+    setList('[data-slot="articles"]', arts.length ? arts.map((a) => {
+      const href = a.locked
+        ? "private.html?p=" + encodeURIComponent(a.id)
+        : "post.html?p=" + encodeURIComponent(a.id);
+      const meta = a.locked
+        ? "密码"
+        : [].concat(a.category || [], a.tags || [], a.minutes ? a.minutes + " 分钟" : []).filter(Boolean).map(esc).join(" · ");
+      return `
       <div class="adm-host" data-kind="article" data-id="${esc(a.id)}">
-        <a class="entry" href="post.html?p=${encodeURIComponent(a.id)}">
+        <a class="entry" href="${href}">
           <div class="entry__date">${esc(MONTH(a.date).full)}</div>
           <div>
             <h3 class="entry__title">${esc(a.title)}</h3>
-            ${a.excerpt ? `<p class="entry__desc">${esc(a.excerpt)}</p>` : ''}
-            <div class="entry__meta">${[].concat(a.category || [], a.tags || [], a.minutes ? a.minutes + ' 分钟' : []).filter(Boolean).map(esc).join(' · ')}</div>
+            ${!a.locked && a.excerpt ? `<p class="entry__desc">${esc(a.excerpt)}</p>` : ""}
+            ${meta ? `<div class="entry__meta">${meta}</div>` : ""}
           </div>
         </a>
-      </div>`).join('') : '');
+      </div>`;
+    }).join("") : "");
 
-    setList('[data-slot="notes"]', notes.length ? notes.map((n) => `
+    setList('[data-slot="notes"]', notes.length ? notes.map((n) => n.locked ? `
+      <a class="note note--locked" href="private.html?n=${encodeURIComponent(n.id)}">
+        <div class="note__date">${esc(MONTH(n.date).full)}</div>
+        <div class="note__main"><p class="note__text">这则要密码。</p></div>
+      </a>` : `
       <article class="note adm-host" id="note-${esc(n.id)}" data-kind="note" data-id="${esc(n.id)}">
         <div class="note__date">${esc(MONTH(n.date).full)}</div>
         <div class="note__main">
@@ -210,7 +222,7 @@
           ${noteTagsHtml(n.tags, false)}
           ${likeButton("note", n.id, n.likes)}
         </div>
-      </article>`).join('') : '');
+      </article>`).join("") : "");
   }
 
   /* ---------- 文章列表 ---------- */
@@ -301,7 +313,7 @@
   }
 
   function renderWriting(data) {
-    const all = (data.articles || []).slice().sort(newest);
+    const all = (data.articles || []).filter((a) => !a.locked).slice().sort(newest);
     if (articlesCat && !ARTICLE_CATS.includes(articlesCat)) articlesCat = '';
     renderWritingHead();
     renderArticleFilters(all);
@@ -402,7 +414,7 @@
   }
 
   function renderNotes(data) {
-    const all = (data.notes || []).slice().sort(newest);
+    const all = (data.notes || []).filter((n) => !n.locked).slice().sort(newest);
     if (notesTag && !all.some((n) => (n.tags || []).includes(notesTag))) {
       notesTag = '';
     }
@@ -513,6 +525,13 @@
     if (!art) {
       document.querySelector('[data-slot="post"]').innerHTML =
         '<p class="empty">这篇文章不在了。<a href="writing.html">回到文章列表</a></p>';
+      return;
+    }
+
+    if (art.locked) {
+      document.title = art.title + " — Kris";
+      document.querySelector('[data-slot="post"]').innerHTML =
+        '<p class="empty">这篇要密码。<a href="private.html?p=' + encodeURIComponent(art.id) + '">打开</a></p>';
       return;
     }
 
@@ -760,7 +779,7 @@
     const articles = (data.articles || []).slice().sort(newest);
     const notes = (data.notes || []).slice().sort(newest);
     setList('[data-slot="lock-articles"]', articles.map((a) => `
-      <article class="note">
+      <article class="note" id="post-${esc(a.id)}">
         <div class="note__date">${esc(MONTH(a.date).full)}</div>
         <div class="note__main">
           <h2 class="lock__title">${esc(a.title)}</h2>
@@ -769,7 +788,7 @@
         </div>
       </article>`).join(""));
     setList('[data-slot="lock-notes"]', notes.map((n) => `
-      <article class="note">
+      <article class="note" id="note-${esc(n.id)}">
         <div class="note__date">${esc(MONTH(n.date).full)}</div>
         <div class="note__main"><div class="note__text">${renderBody(n.text)}</div></div>
       </article>`).join(""));
@@ -810,6 +829,7 @@
           }
           if (password) password.value = "";
           renderPrivateRoom(body);
+          focusPrivatePiece();
         } catch (err) {
           fail("暂时打不开");
         }
@@ -834,7 +854,20 @@
     fetch("/api/private", { cache: "no-store", credentials: "same-origin" }).then(async (res) => {
       if (!res.ok) return;
       renderPrivateRoom(await res.json());
+      focusPrivatePiece();
     }).catch(() => {});
+  }
+
+  function focusPrivatePiece() {
+    const params = new URLSearchParams(location.search);
+    const postId = params.get("p");
+    const noteId = params.get("n");
+    const el = postId
+      ? document.getElementById("post-" + postId)
+      : noteId
+        ? document.getElementById("note-" + noteId)
+        : null;
+    if (el) el.scrollIntoView({ block: "start" });
   }
 
   async function start() {

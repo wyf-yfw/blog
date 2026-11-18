@@ -24,6 +24,26 @@ function mapArticle(row, views, likes) {
   };
 }
 
+function mapLockedArticle(row) {
+  return {
+    id: row.id,
+    date: row.date,
+    title: row.title,
+    excerpt: "",
+    category: row.category,
+    tags: [],
+    minutes: null,
+    body: "",
+    views: 0,
+    likes: 0,
+    locked: true,
+  };
+}
+
+function mapLockedNote(row) {
+  return { id: row.id, date: row.date, text: "", tags: [], likes: 0, locked: true };
+}
+
 function mapNote(row, likes) {
   return { id: row.id, date: row.date, text: row.text, tags: tagsOf(row.tags), likes };
 }
@@ -49,10 +69,10 @@ export async function getSite(db) {
   const about = await db.prepare("SELECT paragraphs, photo FROM about WHERE id = 1").first();
   const goals = await db.prepare("SELECT year, items FROM goals WHERE id = 1").first();
   const articles = await db.prepare(
-    "SELECT id, date, title, excerpt, category, tags, minutes, body FROM articles WHERE secret = 0 ORDER BY date DESC, created_at DESC, id DESC"
+    "SELECT id, date, title, excerpt, category, tags, minutes, body, secret FROM articles ORDER BY date DESC, created_at DESC, id DESC"
   ).all();
   const notes = await db.prepare(
-    "SELECT id, date, text, tags FROM notes WHERE secret = 0 ORDER BY date DESC, created_at DESC, id DESC"
+    "SELECT id, date, text, tags, secret FROM notes ORDER BY date DESC, created_at DESC, id DESC"
   ).all();
   const timeline = await db.prepare(
     "SELECT id, date, text, kind FROM timeline ORDER BY date DESC, rowid DESC LIMIT 200"
@@ -67,8 +87,16 @@ export async function getSite(db) {
   }
   return {
     about: { paragraphs, photo: (about && about.photo) || "", goals: goalsOf(goals) },
-    articles: articles.results.map((row) => mapArticle(row, bySubject.get("post:" + row.id) || 0, byLike.get("post:" + row.id) || 0)),
-    notes: notes.results.map((row) => mapNote(row, byLike.get("note:" + row.id) || 0)),
+    articles: articles.results.map((row) => (
+      row.secret === 1
+        ? mapLockedArticle(row)
+        : mapArticle(row, bySubject.get("post:" + row.id) || 0, byLike.get("post:" + row.id) || 0)
+    )),
+    notes: notes.results.map((row) => (
+      row.secret === 1
+        ? mapLockedNote(row)
+        : mapNote(row, byLike.get("note:" + row.id) || 0)
+    )),
     timeline: timeline.results,
     views: bySubject.get("site") || 0,
   };

@@ -33,8 +33,11 @@ test("密码页的内容不进公开站点和 RSS，密码对了才能读", asyn
   expect((await admin("/api/admin/articles", { title: "私信", body: "正文", secret: true })).status).toBe(200);
 
   const site = await (await worker.fetch(new Request("https://kris.test/api/site"), env)).json();
-  expect(site.notes.map((n) => n.text)).toEqual(["公开的一句"]);
-  expect(site.articles).toEqual([]);
+  expect(site.notes.map((n) => n.text)).toEqual(["", "公开的一句"]);
+  expect(site.notes[0].locked).toBe(true);
+  expect(site.articles).toEqual([expect.objectContaining({ title: "私信", locked: true, body: "", excerpt: "" })]);
+  expect(JSON.stringify(site)).not.toContain("只给你看");
+  expect(JSON.stringify(site)).not.toContain("正文");
   const xml = await (await worker.fetch(new Request("https://kris.test/rss.xml"), env)).text();
   expect(xml).toContain("公开的一句");
   expect(xml).not.toContain("只给你看");
