@@ -2024,6 +2024,12 @@ body[data-page="admin"] .desk__apply-ops {
 .gb__submit:disabled { opacity: 0.5; cursor: default; }
 
 .lock { max-width: 22rem; }
+.lock .gb__input {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  line-height: normal;
+  caret-color: var(--ink);
+  letter-spacing: 0.04em;
+}
 .lock__head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
 .lock__close {
   appearance: none;
@@ -2285,6 +2291,7 @@ body.is-editing .adm-add { display: inline-flex; }
 }
 
 .adm__form textarea { resize: vertical; font-family: var(--font-serif); font-size: 14px; }
+.adm__form input[type="password"] { line-height: normal; }
 .adm__form select {
   cursor: pointer;
   appearance: none;

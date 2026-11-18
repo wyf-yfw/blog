@@ -6,7 +6,7 @@ import { getPrivate } from "./site.js";
 const COOKIE = "kris_lock";
 const MAX_AGE = 30 * 24 * 60 * 60;
 const WINDOW = 15 * 60 * 1000;
-const LOCK_HASH = "pbkdf2-sha256$100000$qqHCTQRNezDDY7DUm/2KHw==$rn3CRTE9hwFr4CM94ByeiM7QkT526/LKbsd/5+iiEbI=";
+const LOCK_HASH = "pbkdf2-sha256$100000$SVxfOwGqyZvvRoK3rAEf8w==$0H7mgSr5fWdaJMEMHiR+2DWLet8rjzTldNBj3Mkqv3I=";
 
 function newToken() {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
@@ -70,7 +70,7 @@ export async function handlePrivate(request, env) {
     return fail(429, "rate_limited", "试得太多了，稍后再来");
   }
   const body = await readJson(request);
-  const ok = await verifyPassword(String(body.password || ""), LOCK_HASH);
+  const ok = await verifyPassword(String(body.password || "").trim().toLowerCase(), LOCK_HASH);
   if (!ok) {
     await env.DB.prepare(
       "INSERT INTO login_attempts (ip_hash, failed_at) VALUES (?, ?)"

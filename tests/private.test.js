@@ -4,7 +4,7 @@ import { hashPassword } from "../worker/password.js";
 import worker from "../worker/index.js";
 import { resetDb } from "./helpers.js";
 
-const WORD = "章鱼";
+const WORD = "zhangyu";
 
 beforeEach(async () => {
   await resetDb();
