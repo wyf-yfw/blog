@@ -750,7 +750,98 @@
     apply(data);
   }
 
+  function renderPrivateRoom(data) {
+    const form = document.querySelector("[data-lock]");
+    const room = document.querySelector("[data-lock-room]");
+    const close = document.querySelector("[data-lock-close]");
+    if (form) form.hidden = true;
+    if (room) room.hidden = false;
+    if (close) close.hidden = false;
+    const articles = (data.articles || []).slice().sort(newest);
+    const notes = (data.notes || []).slice().sort(newest);
+    setList('[data-slot="lock-articles"]', articles.map((a) => `
+      <article class="note">
+        <div class="note__date">${esc(MONTH(a.date).full)}</div>
+        <div class="note__main">
+          <h2 class="lock__title">${esc(a.title)}</h2>
+          ${a.excerpt ? `<p class="article__lede">${esc(a.excerpt)}</p>` : ""}
+          <div class="prose">${renderBody(a.body)}</div>
+        </div>
+      </article>`).join(""));
+    setList('[data-slot="lock-notes"]', notes.map((n) => `
+      <article class="note">
+        <div class="note__date">${esc(MONTH(n.date).full)}</div>
+        <div class="note__main"><div class="note__text">${renderBody(n.text)}</div></div>
+      </article>`).join(""));
+  }
+
+  function initPrivate() {
+    const form = document.querySelector("[data-lock]");
+    const status = document.querySelector("[data-lock-status]");
+    const room = document.querySelector("[data-lock-room]");
+    const close = document.querySelector("[data-lock-close]");
+    const password = form && form.password;
+    if (password) password.focus();
+
+    const fail = (text) => {
+      if (!status) return;
+      status.dataset.kind = "err";
+      status.textContent = text;
+    };
+
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (status) {
+          status.dataset.kind = "";
+          status.textContent = "";
+        }
+        try {
+          const res = await fetch("/api/private", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ password: password ? password.value : "" }),
+          });
+          const body = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            fail(body.hint || "密码不对");
+            return;
+          }
+          if (password) password.value = "";
+          renderPrivateRoom(body);
+        } catch (err) {
+          fail("暂时打不开");
+        }
+      });
+    }
+
+    if (close) {
+      close.addEventListener("click", async () => {
+        try {
+          await fetch("/api/private/logout", { method: "POST", credentials: "same-origin" });
+        } catch (err) { /* 锁不上也把这一页盖住 */ }
+        if (room) room.hidden = true;
+        if (close) close.hidden = true;
+        if (form) form.hidden = false;
+        if (password) {
+          password.value = "";
+          password.focus();
+        }
+      });
+    }
+
+    fetch("/api/private", { cache: "no-store", credentials: "same-origin" }).then(async (res) => {
+      if (!res.ok) return;
+      renderPrivateRoom(await res.json());
+    }).catch(() => {});
+  }
+
   async function start() {
+    if (document.body.dataset.page === "private") {
+      initPrivate();
+      return;
+    }
     const cached = readSiteCache();
     if (cached) {
       lastFingerprint = dataFingerprint(cached);
@@ -771,7 +862,7 @@
 
   /* 后台内容有更新时，静默重拉接口，免手动刷新 */
   async function softRefreshContent() {
-    if (document.hidden) return;
+    if (document.body.dataset.page === "private" || document.hidden) return;
     try {
       const res = await fetch(API.dataUrl(), { cache: 'no-store' });
       if (!res.ok) return;

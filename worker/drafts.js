@@ -24,6 +24,7 @@ function clean(input, today) {
     category,
     tags: JSON.stringify(tags),
     body: String(body.body == null ? "" : body.body).slice(0, MAX_BODY),
+    secret: body.secret ? 1 : 0,
   };
 }
 
@@ -36,6 +37,7 @@ function shape(row) {
     category: row.category,
     tags: JSON.parse(row.tags || "[]"),
     body: row.body,
+    secret: row.secret === 1,
     updatedAt: row.updated_at,
   };
 }
@@ -59,13 +61,13 @@ export async function handleDrafts(request, env, now) {
   if (request.method === "PUT") {
     const item = clean(await readJson(request), today);
     await env.DB.prepare(
-      `INSERT INTO drafts (draft_key, title, date, excerpt, category, tags, body, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO drafts (draft_key, title, date, excerpt, category, tags, body, secret, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(draft_key) DO UPDATE SET
          title = excluded.title, date = excluded.date, excerpt = excluded.excerpt,
          category = excluded.category, tags = excluded.tags, body = excluded.body,
-         updated_at = excluded.updated_at`
-    ).bind(key, item.title, item.date, item.excerpt, item.category, item.tags, item.body, ts).run();
+         secret = excluded.secret, updated_at = excluded.updated_at`
+    ).bind(key, item.title, item.date, item.excerpt, item.category, item.tags, item.body, item.secret, ts).run();
     return json({ ok: true, updatedAt: ts });
   }
 

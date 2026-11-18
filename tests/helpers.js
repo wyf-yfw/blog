@@ -6,17 +6,18 @@ import goalsSchema from "../migrations/0005_goals.sql?raw";
 import linksSchema from "../migrations/0006_links.sql?raw";
 import aboutPhotoSchema from "../migrations/0007_about_photo.sql?raw";
 import likesSchema from "../migrations/0008_likes.sql?raw";
+import privateSchema from "../migrations/0009_private.sql?raw";
 import { env } from "cloudflare:workers";
 
 const TABLES = [
   "sessions", "articles", "notes", "about", "timeline",
   "guestbook", "guestbook_limits", "login_attempts", "media", "users",
   "view_seen", "view_counts", "drafts", "stars", "stars_meta", "goals", "links", "link_limits",
-  "like_counts", "like_seen",
+  "like_counts", "like_seen", "lock_sessions",
 ];
 
 export async function resetDb() {
-  const parts = (schema + "\n" + viewsSchema + "\n" + draftsSchema + "\n" + starsSchema + "\n" + goalsSchema + "\n" + linksSchema + "\n" + aboutPhotoSchema + "\n" + likesSchema).split(/;\s*(?:\r?\n|$)/).map((s) => s.trim()).filter(Boolean);
+  const parts = (schema + "\n" + viewsSchema + "\n" + draftsSchema + "\n" + starsSchema + "\n" + goalsSchema + "\n" + linksSchema + "\n" + aboutPhotoSchema + "\n" + likesSchema + "\n" + privateSchema).split(/;\s*(?:\r?\n|$)/).map((s) => s.trim()).filter(Boolean);
   for (const stmt of parts) {
     try {
       await env.DB.prepare(stmt).run();

@@ -29,7 +29,7 @@ export async function handleView(request, env) {
   if (page === "post") {
     const id = String(body.id || "");
     if (/^[\w-]{1,40}$/.test(id)) {
-      const article = await db.prepare("SELECT id FROM articles WHERE id = ?").bind(id).first();
+      const article = await db.prepare("SELECT id FROM articles WHERE id = ? AND secret = 0").bind(id).first();
       if (article) await countOnce(db, "post:" + id, visitor);
     }
   }

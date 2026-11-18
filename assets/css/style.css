@@ -2023,6 +2023,39 @@ body[data-page="admin"] .desk__apply-ops {
 .gb__submit:hover { opacity: 0.9; }
 .gb__submit:disabled { opacity: 0.5; cursor: default; }
 
+.lock { max-width: 22rem; }
+.lock__head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.lock__close {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.lock__close:hover { color: var(--ink); }
+.lock__group { margin-top: clamp(36px, 6vw, 72px); }
+.lock__title {
+  margin: 0 0 12px;
+  font-family: var(--font-serif);
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+.sheet__lock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 16px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
 .gb__status {
   margin: 0;
   font-family: var(--font-mono);

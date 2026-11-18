@@ -4,6 +4,7 @@ import { newId } from "./ids.js";
 import { shanghaiNow } from "./time.js";
 import { recordTimeline } from "./timeline.js";
 import { decideLink, listForAdmin, removeLink } from "./links.js";
+import { getAdminLibrary } from "./site.js";
 import { aboutInput, aboutPhotoInput, articleInput, goalsInput, noteInput } from "./validate.js";
 
 function idFrom(path, prefix) {
@@ -23,15 +24,19 @@ export async function handleContent(request, env, session) {
   const db = env.DB;
   const ts = now.toISOString();
 
+  if (path === "/api/admin/entries" && request.method === "GET") {
+    return json(await getAdminLibrary(db));
+  }
+
   if (path === "/api/admin/articles" && request.method === "POST") {
     const item = articleInput(await readJson(request), today);
     const id = newId();
     await db.prepare(
       `INSERT INTO articles
-        (id, date, title, excerpt, category, tags, minutes, body, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).bind(id, item.date, item.title, item.excerpt, item.category, JSON.stringify(item.tags), item.minutes, item.body, ts, ts).run();
-    await recordTimeline(db, "article", "create", item.title, now);
+        (id, date, title, excerpt, category, tags, minutes, body, secret, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(id, item.date, item.title, item.excerpt, item.category, JSON.stringify(item.tags), item.minutes, item.body, item.secret, ts, ts).run();
+    if (!item.secret) await recordTimeline(db, "article", "create", item.title, now);
     return json({ id });
   }
 
@@ -42,16 +47,16 @@ export async function handleContent(request, env, session) {
     const item = articleInput(await readJson(request), today);
     await db.prepare(
       `UPDATE articles
-       SET date = ?, title = ?, excerpt = ?, category = ?, tags = ?, minutes = ?, body = ?, updated_at = ?
+       SET date = ?, title = ?, excerpt = ?, category = ?, tags = ?, minutes = ?, body = ?, secret = ?, updated_at = ?
        WHERE id = ?`
-    ).bind(item.date, item.title, item.excerpt, item.category, JSON.stringify(item.tags), item.minutes, item.body, ts, id).run();
-    await recordTimeline(db, "article", "update", item.title, now);
+    ).bind(item.date, item.title, item.excerpt, item.category, JSON.stringify(item.tags), item.minutes, item.body, item.secret, ts, id).run();
+    if (!item.secret) await recordTimeline(db, "article", "update", item.title, now);
     return json({ id });
   }
 
   if (path.startsWith("/api/admin/articles/") && request.method === "DELETE") {
     const id = idFrom(path, "/api/admin/articles/");
-    const current = await db.prepare("SELECT title FROM articles WHERE id = ?").bind(id).first();
+    const current = await db.prepare("SELECT title, secret FROM articles WHERE id = ?").bind(id).first();
     if (!current) return json({ error: "not_found", hint: "没有这篇文章" }, 404);
     await db.batch([
       db.prepare("DELETE FROM articles WHERE id = ?").bind(id),
@@ -59,7 +64,7 @@ export async function handleContent(request, env, session) {
       db.prepare("DELETE FROM like_counts WHERE subject = ?").bind("post:" + id),
       db.prepare("DELETE FROM like_seen WHERE subject = ?").bind("post:" + id),
     ]);
-    await recordTimeline(db, "article", "delete", current.title, now);
+    if (!current.secret) await recordTimeline(db, "article", "delete", current.title, now);
     return json({ ok: true });
   }
 
@@ -67,9 +72,9 @@ export async function handleContent(request, env, session) {
     const item = noteInput(await readJson(request), today);
     const id = newId();
     await db.prepare(
-      "INSERT INTO notes (id, date, text, tags, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)"
-    ).bind(id, item.date, item.text, JSON.stringify(item.tags), ts, ts).run();
-    await recordTimeline(db, "note", "create", item.text, now);
+      "INSERT INTO notes (id, date, text, tags, secret, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    ).bind(id, item.date, item.text, JSON.stringify(item.tags), item.secret, ts, ts).run();
+    if (!item.secret) await recordTimeline(db, "note", "create", item.text, now);
     return json({ id });
   }
 
@@ -79,22 +84,22 @@ export async function handleContent(request, env, session) {
     if (!current) return json({ error: "not_found", hint: "没有这篇手记" }, 404);
     const item = noteInput(await readJson(request), today);
     await db.prepare(
-      "UPDATE notes SET date = ?, text = ?, tags = ?, updated_at = ? WHERE id = ?"
-    ).bind(item.date, item.text, JSON.stringify(item.tags), ts, id).run();
-    await recordTimeline(db, "note", "update", item.text, now);
+      "UPDATE notes SET date = ?, text = ?, tags = ?, secret = ?, updated_at = ? WHERE id = ?"
+    ).bind(item.date, item.text, JSON.stringify(item.tags), item.secret, ts, id).run();
+    if (!item.secret) await recordTimeline(db, "note", "update", item.text, now);
     return json({ id });
   }
 
   if (path.startsWith("/api/admin/notes/") && request.method === "DELETE") {
     const id = idFrom(path, "/api/admin/notes/");
-    const current = await db.prepare("SELECT text FROM notes WHERE id = ?").bind(id).first();
+    const current = await db.prepare("SELECT text, secret FROM notes WHERE id = ?").bind(id).first();
     if (!current) return json({ error: "not_found", hint: "没有这篇手记" }, 404);
     await db.batch([
       db.prepare("DELETE FROM notes WHERE id = ?").bind(id),
       db.prepare("DELETE FROM like_counts WHERE subject = ?").bind("note:" + id),
       db.prepare("DELETE FROM like_seen WHERE subject = ?").bind("note:" + id),
     ]);
-    await recordTimeline(db, "note", "delete", current.text, now);
+    if (!current.secret) await recordTimeline(db, "note", "delete", current.text, now);
     return json({ ok: true });
   }
 

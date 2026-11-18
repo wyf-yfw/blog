@@ -27,7 +27,7 @@ export async function handleLike(request, env) {
 
   const db = env.DB;
   const table = body.kind === "post" ? "articles" : "notes";
-  const found = await db.prepare(`SELECT id FROM ${table} WHERE id = ?`).bind(id).first();
+  const found = await db.prepare(`SELECT id FROM ${table} WHERE id = ? AND secret = 0`).bind(id).first();
   if (!found) return fail(404, "not_found", "没有这篇");
 
   const visitor = await sha256Hex(token);

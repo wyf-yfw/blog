@@ -426,6 +426,7 @@
       + '<label class="tag-field">标签 <input name="tags" placeholder="用空格分开"></label>'
       + '<label>摘要 <input name="excerpt" maxlength="200" placeholder="可以空着"></label>'
       + "</div>"
+      + '<label class="sheet__lock"><input name="secret" type="checkbox"> 只在密码页</label>'
       + '<textarea name="body" hidden></textarea>';
     const seed = draft || item || null;
     if (draft) {
@@ -442,6 +443,7 @@
       form.body.value = item.body || "";
     }
     applyDate(form, seed);
+    form.secret.checked = Boolean(seed && seed.secret);
     mountTagPicks(form.tags);
     const source = form.querySelector("textarea");
     const writer = mountWriter(source);
@@ -484,7 +486,8 @@
         excerpt: form.excerpt.value,
         category: form.category.value,
         tags: splitTags(form.tags.value),
-        body: form.body.value
+        body: form.body.value,
+        secret: form.secret.checked
       };
     }
     /* 草稿：改过才存。关掉页面不会再写回去。只有关浏览器时才用 keepalive。 */
@@ -620,10 +623,12 @@
     form.className = "adm__form";
     form.innerHTML = field("日期", '<input name="date" type="date" required>')
       + field("正文", '<textarea name="text" rows="8" required></textarea>')
-      + '<label class="tag-field">标签 <input name="tags" placeholder="用空格分开"></label>';
+      + '<label class="tag-field">标签 <input name="tags" placeholder="用空格分开"></label>'
+      + '<label class="sheet__lock"><input name="secret" type="checkbox"> 只在密码页</label>';
     if (item) {
       form.text.value = item.text || "";
       form.tags.value = (item.tags || []).join(" ");
+      form.secret.checked = Boolean(item.secret);
     }
     applyDate(form, item);
     mountTagPicks(form.tags);
@@ -643,7 +648,12 @@
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
       source.value = writer.read();
-      const body = { date: form.date.value, text: form.text.value, tags: splitTags(form.tags.value) };
+      const body = {
+        date: form.date.value,
+        text: form.text.value,
+        tags: splitTags(form.tags.value),
+        secret: form.secret.checked
+      };
       try {
         await send(item ? "/api/admin/notes/" + item.id : "/api/admin/notes", {
           method: item ? "PUT" : "POST",
@@ -760,7 +770,7 @@
       return made.el;
     });
     const rows = items.map(function (item) {
-      const made = makeRow(whenOf(item.date), item.title);
+      const made = makeRow(whenOf(item.date), item.secret ? item.title + " · 密码页" : item.title);
       const edit = textButton("编辑");
       edit.addEventListener("click", function () { openSheet(item); });
       const del = textButton("删除", true);
@@ -792,7 +802,7 @@
   function renderNotes(items) {
     const section = document.querySelector("[data-notes]");
     const rows = items.map(function (item) {
-      const made = makeRow(whenOf(item.date), item.text);
+      const made = makeRow(whenOf(item.date), item.secret ? item.text + " · 密码页" : item.text);
       const edit = textButton("编辑");
       edit.addEventListener("click", function () { openEditor(section, item); });
       const del = textButton("删除", true);
@@ -1065,11 +1075,12 @@
 
   async function load() {
     const site = await send("/api/site");
+    const library = await send("/api/admin/entries");
     const book = await send("/api/guestbook");
     const drafts = await send("/api/admin/drafts").catch(function () { return { items: [] }; });
-    rememberTags([site.articles, site.notes, drafts.items]);
-    renderArticles(site.articles || [], drafts.items || []);
-    renderNotes(site.notes || []);
+    rememberTags([library.articles, library.notes, drafts.items]);
+    renderArticles(library.articles || [], drafts.items || []);
+    renderNotes(library.notes || []);
     aboutForm.paragraphs.value = ((site.about && site.about.paragraphs) || []).join("\n\n");
     showAboutPhoto((site.about && site.about.photo) || "");
     renderGoalEditor(site);

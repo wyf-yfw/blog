@@ -27,12 +27,15 @@ test("合法文章补上当天日期和默认类别", () => {
     tags: ["a"],
     minutes: null,
     body: "",
+    secret: 0,
   });
+  expect(articleInput({ title: "题", secret: true }, today).secret).toBe(1);
 });
 
 test("手记要有正文，关于会丢掉空段", () => {
   expect(() => noteInput({ text: "  " }, today)).toThrowError(expect.objectContaining({ hint: "手记要有内容" }));
-  expect(noteInput({ text: " 一句 " }, today)).toEqual({ date: today, text: "一句", tags: [] });
+  expect(noteInput({ text: " 一句 " }, today)).toEqual({ date: today, text: "一句", tags: [], secret: 0 });
+  expect(noteInput({ text: "一句", secret: true }, today).secret).toBe(1);
   expect(aboutInput({ paragraphs: [" 甲 ", "", "乙"] })).toEqual(["甲", "乙"]);
 });
 

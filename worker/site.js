@@ -49,10 +49,10 @@ export async function getSite(db) {
   const about = await db.prepare("SELECT paragraphs, photo FROM about WHERE id = 1").first();
   const goals = await db.prepare("SELECT year, items FROM goals WHERE id = 1").first();
   const articles = await db.prepare(
-    "SELECT id, date, title, excerpt, category, tags, minutes, body FROM articles ORDER BY date DESC, created_at DESC, id DESC"
+    "SELECT id, date, title, excerpt, category, tags, minutes, body FROM articles WHERE secret = 0 ORDER BY date DESC, created_at DESC, id DESC"
   ).all();
   const notes = await db.prepare(
-    "SELECT id, date, text, tags FROM notes ORDER BY date DESC, created_at DESC, id DESC"
+    "SELECT id, date, text, tags FROM notes WHERE secret = 0 ORDER BY date DESC, created_at DESC, id DESC"
   ).all();
   const timeline = await db.prepare(
     "SELECT id, date, text, kind FROM timeline ORDER BY date DESC, rowid DESC LIMIT 200"
@@ -71,6 +71,34 @@ export async function getSite(db) {
     notes: notes.results.map((row) => mapNote(row, byLike.get("note:" + row.id) || 0)),
     timeline: timeline.results,
     views: bySubject.get("site") || 0,
+  };
+}
+
+const ORDER = "ORDER BY date DESC, created_at DESC, id DESC";
+
+export async function getPrivate(db) {
+  const articles = await db.prepare(
+    "SELECT id, date, title, excerpt, category, tags, minutes, body FROM articles WHERE secret = 1 " + ORDER
+  ).all();
+  const notes = await db.prepare(
+    "SELECT id, date, text, tags FROM notes WHERE secret = 1 " + ORDER
+  ).all();
+  return {
+    articles: articles.results.map((row) => mapArticle(row, 0, 0)),
+    notes: notes.results.map((row) => mapNote(row, 0)),
+  };
+}
+
+export async function getAdminLibrary(db) {
+  const articles = await db.prepare(
+    "SELECT id, date, title, excerpt, category, tags, minutes, body, secret FROM articles " + ORDER
+  ).all();
+  const notes = await db.prepare(
+    "SELECT id, date, text, tags, secret FROM notes " + ORDER
+  ).all();
+  return {
+    articles: articles.results.map((row) => ({ ...mapArticle(row, 0, 0), secret: row.secret === 1 })),
+    notes: notes.results.map((row) => ({ ...mapNote(row, 0), secret: row.secret === 1 })),
   };
 }
 

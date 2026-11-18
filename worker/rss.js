@@ -122,10 +122,10 @@ export async function handleRss(request, env) {
   const origin = new URL(request.url).origin;
   const db = env.DB;
   const articles = await db.prepare(
-    "SELECT id, date, title, excerpt, category, tags, body, created_at FROM articles"
+    "SELECT id, date, title, excerpt, category, tags, body, created_at FROM articles WHERE secret = 0"
   ).all();
   const notes = await db.prepare(
-    "SELECT id, date, text, tags, created_at FROM notes"
+    "SELECT id, date, text, tags, created_at FROM notes WHERE secret = 0"
   ).all();
 
   const items = [];

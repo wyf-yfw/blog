@@ -42,6 +42,7 @@ export function articleInput(body, today) {
     tags: parseTags(body.tags),
     minutes: readingMinutes(body.body),
     body: body.body == null ? "" : String(body.body),
+    secret: body && body.secret ? 1 : 0,
   };
 }
 
@@ -50,7 +51,7 @@ export function noteInput(body, today) {
   if (!text) throw httpError(400, "invalid", "手记要有内容");
   const date = body.date ? String(body.date) : today;
   if (!isYmd(date)) throw httpError(400, "invalid", "日期格式不对");
-  return { date, text, tags: parseTags(body.tags) };
+  return { date, text, tags: parseTags(body.tags), secret: body && body.secret ? 1 : 0 };
 }
 
 export function aboutInput(body) {
